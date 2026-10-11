@@ -1,6 +1,6 @@
 # EDS O2-Planung — Cloudflare Worker (Speicher für «Meine Berechnung», KV)
-# Einrichtung ohne lokalen Rechner: GitHub → Actions → «Setup worker» (siehe SETUP.md).
-# Hier stehen keine Geheimnisse; die Namespace-ID ist keine vertrauliche Angabe.
+# Einrichtung und Deploy ohne lokalen Rechner: Repository bwicki/briefing → Actions → «O2 worker»
+# (dort liegen die Cloudflare-Zugangsdaten bereits; siehe SETUP.md). Hier stehen keine Geheimnisse.
 name = "o2-api"
 main = "src/index.js"
 compatibility_date = "2025-09-01"
@@ -13,4 +13,4 @@ KEEP_DAYS = "183"
 
 [[kv_namespaces]]
 binding = "CALCS"
-id = "00000000000000000000000000000000"   # trägt der Workflow «Setup worker» ein
+id = "00000000000000000000000000000000"   # Platzhalter: der Workflow «O2 worker» setzt die ID beim Deploy ein

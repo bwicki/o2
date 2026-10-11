@@ -1,7 +1,7 @@
 # Einrichtung — alles im Browser
 
-Zwei Teile: die App (GitHub Pages) und der Speicher-Server für «Meine
-Berechnung» (Cloudflare). Die App läuft schon nach Teil 1; Teil 2 sorgt dafür,
+Zwei Teile: die App (GitHub Pages, Repository `bwicki/o2`) und der
+Speicher-Server für «Meine Berechnung» (Cloudflare). Die App läuft schon nach Teil 1; Teil 2 sorgt dafür,
 dass ein Kurzcode auf jedem Gerät denselben Stand zeigt.
 
 Schlüssel und Kennwörter nie in Dateien des Repositories schreiben und nie im
@@ -21,24 +21,25 @@ Chat weitergeben.
 
 ## 2 Speicher-Server (Cloudflare Worker)
 
-1. Cloudflare-Dashboard → **Account-ID** kopieren (Workers & Pages, rechte Spalte).
-2. API-Token: My Profile → API Tokens → Create Token → Vorlage **Edit Cloudflare
-   Workers** → Continue → Create Token. Das Token wird nur einmal gezeigt.
-3. Repository `bwicki/o2` → Settings → Secrets and variables → Actions → **New
-   repository secret**, zweimal:
-   - Name `CLOUDFLARE_API_TOKEN`, Wert: das Token
-   - Name `CLOUDFLARE_ACCOUNT_ID`, Wert: die Account-ID
-4. Repository → **Actions** → links «Setup worker» → rechts **Run workflow** →
-   `api_base` auf `auto` lassen → grüner Knopf **Run workflow**.
-5. Der Lauf dauert 1–2 Minuten: Er legt den KV-Namespace `o2-calcs` an, deployt
-   den Worker `o2-api`, prüft ihn und trägt seine Adresse in `js/config.js` ein
-   (Commit «Setup worker: KV-Namespace, apiBase»).
-6. Prüfung: https://o2.wicki.aero neu laden, einen Wert ändern — in der Zeile
+Die Cloudflare-Zugangsdaten liegen bereits als Secrets im Repository
+`bwicki/briefing`. Deshalb läuft die Einrichtung von dort aus; in `bwicki/o2`
+ist nichts einzutragen. Voraussetzung: `bwicki/o2` ist öffentlich und enthält
+den Ordner `worker/`.
+
+1. Repository `bwicki/briefing` → **Actions** → links «O2 worker» → rechts
+   **Run workflow** → grüner Knopf **Run workflow**.
+2. Der Lauf dauert 1–2 Minuten: Er holt den Quelltext aus `bwicki/o2`, lässt
+   die Tests laufen, legt den KV-Namespace `o2-calcs` an (oder findet ihn),
+   deployt den Worker `o2-api` und prüft ihn. Die Zusammenfassung des Laufs
+   zeigt die Adresse, in der Regel `https://o2-api.<konto>.workers.dev`.
+3. Diese Adresse steht in `bwicki/o2` in `js/config.js` als `apiBase`. Solange
+   dort `''` steht, arbeitet die App im Gerätemodus.
+4. Prüfung: https://o2.wicki.aero neu laden, einen Wert ändern — in der Zeile
    «Meine Berechnung» steht «gespeichert». Dieselbe Adresse auf einem zweiten
    Gerät zeigt denselben Stand.
 
-Bricht der Lauf ab, steht die Ursache rot im Protokoll (meist ein fehlendes
-Secret). Der Workflow ist wiederholbar.
+Bricht der Lauf ab, steht die Ursache rot im Protokoll. Der Workflow ist
+wiederholbar und fasst den Worker und die Daten des Fahrtbriefings nicht an.
 
 ## Aufbewahrung und Kosten
 
@@ -49,5 +50,6 @@ Lesevorgänge pro Tag) reicht für diese Nutzung.
 
 ## Später
 
-Änderungen unter `worker/` deployt der Workflow «Deploy worker» von selbst.
-Änderungen an der App sind 1–2 Minuten nach dem Commit auf o2.wicki.aero sichtbar.
+Nach Änderungen unter `worker/` den Workflow «O2 worker» im Repository
+`bwicki/briefing` erneut starten. Änderungen an der App sind 1–2 Minuten nach
+dem Commit auf o2.wicki.aero sichtbar.

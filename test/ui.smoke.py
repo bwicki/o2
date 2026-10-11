@@ -179,6 +179,19 @@ async def main():
             open(f'{SHOTS}/print-many.pdf', 'wb').write(pdf2)
         check(len(re.findall(rb'/Type\s*/Page[^s]', pdf2)) == 1, 'auch dann nur eine Druckseite')
         await pg.emulate_media(media='screen')
+        # zugesagte Obergrenze: 6 Zylinder und 12 Höhenstufen (jede mit Übergang) auf einer A5-Seite
+        await pg.evaluate('''() => { const s = window.O2.state();
+          s.cyl = Array.from({length: 6}, (_, i) => ({nr: String(i + 1), size: 2, p: 200 - i}));
+          s.prof = Array.from({length: 12}, (_, i) => ({alt: 9000 + (i % 2 ? 4500 : 0) + i * 300, dur: 0.5 + i * 0.1})); }''')
+        await pg.locator('#setSf').fill('12')
+        r3 = await pg.evaluate('window.O2.preparePrint()')
+        check(r3['fits'], f'6 Zylinder und 12 Höhenstufen passen auf A5 ({r3})')
+        await pg.emulate_media(media='print')
+        pdf3 = await pg.pdf(prefer_css_page_size=True, print_background=True)
+        if SHOTS:
+            open(f'{SHOTS}/print-6-12.pdf', 'wb').write(pdf3)
+        check(len(re.findall(rb'/Type\s*/Page[^s]', pdf3)) == 1, 'eine Druckseite bei 6 Zylindern und 12 Höhenstufen')
+        await pg.emulate_media(media='screen')
         await ctx.close()
 
         # ---------- Handy ----------

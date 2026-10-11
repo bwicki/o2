@@ -46,7 +46,7 @@ Code: `js/model.js`, Tests: `test/model.test.mjs`.
 | Teil | Ort |
 |---|---|
 | App (statisch, GitHub Pages) | `index.html`, `css/`, `js/`, `sw.js` |
-| Speicher-Server (Cloudflare Worker + KV, 6 Monate Aufbewahrung) | `worker/` |
+| Speicher-Server (Cloudflare Worker + KV, 6 Monate Aufbewahrung) | `worker/`; Deploy über den Workflow «O2 worker» in `bwicki/briefing` |
 | Einrichtung | [SETUP.md](SETUP.md) |
 | Änderungen | [CHANGELOG.md](CHANGELOG.md) |
 

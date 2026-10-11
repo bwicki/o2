@@ -11,5 +11,5 @@ Erste Fassung.
 - Verbrauchswerte aus der Mountain High «Cylinder Duration Chart» (EDS, Kanüle bis FL180, darüber Maske im F-Modus).
 - «Meine Berechnung»: Kurzcode in der Adresse, QR-Code, Speicherung auf dem Gerät; mit Speicher-Server 6 Monate abrufbar, ohne Server trägt der kopierte Link den Stand.
 - Stand nachführen: Dauer auf der Höhenstufe und Druck jetzt, Vergleich mit dem Plan, Verbrauchsfaktor für den Rest der Fahrt.
-- Druck: A5 auf der linken Hälfte eines A4 quer mit Schnittzeichen, immer eine Seite.
+- Druck: A5 auf der linken Hälfte eines A4 quer mit Schnittzeichen; bis 6 Zylinder und 12 Höhenstufen geprüft auf einer Seite.
 - Deutsch und Englisch, helle und dunkle Darstellung, als App installierbar, offline nutzbar.
