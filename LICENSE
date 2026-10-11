@@ -1,0 +1,67 @@
+EDS O2-Planung — Lizenz / License
+=================================
+
+© 2026 Balthasar Wicki, Wicki Aero GmbH, Schweiz. Alle Rechte vorbehalten.
+
+DEUTSCH
+
+1. Einsicht. Der Quelltext ist zur Einsicht veröffentlicht («source-available»).
+   Das Lesen und das Studium des Quelltexts sind gestattet.
+
+2. Zustimmung. Jede weitere Nutzung des Werks oder von Teilen davon —
+   insbesondere Ausführen auf eigenen Systemen, Kopieren, Verändern, Übersetzen,
+   Verbreiten, öffentliches Zugänglichmachen, Einbinden in andere Werke sowie
+   jede gewerbliche Verwendung — bedarf der vorherigen ausdrücklichen Zustimmung
+   des Rechtsinhabers (Anfrage an Balthasar Wicki / Wicki Aero GmbH).
+
+3. Quellenangabe. Bei erteilter Zustimmung ist die Quelle anzugeben:
+   «EDS O2-Planung — Balthasar Wicki / Wicki Aero GmbH,
+   https://github.com/bwicki/o2», und zwar im Quelltext und an einer für
+   Nutzer sichtbaren Stelle (z. B. Impressum, Über-Seite). Diese Lizenzdatei ist
+   beizulegen. Der Rechtsinhaber kann die Zustimmung an weitere Bedingungen
+   knüpfen und sie mit Wirkung für die Zukunft widerrufen.
+
+4. Drittkomponenten. Mitgelieferte Komponenten Dritter (qrcode-generator, MIT;
+   Schriften IBM Plex Mono und Inter, SIL Open Font License 1.1) unterliegen
+   ihren eigenen Lizenzen; siehe `js/vendor` und `fonts`. Die Verbrauchswerte
+   stammen aus der «Cylinder Duration Chart» von Mountain High E&S Co.; «EDS»
+   und «O2D2» sind Bezeichnungen dieses Herstellers, mit dem keine Verbindung
+   besteht. Die Marken und Logos «Wicki Aero», «Wicki Partners» und «Wicki
+   Partners Ballonteam» sind nicht Teil dieser Lizenz.
+
+5. Gewährleistung. Das Werk wird ohne jede Gewähr bereitgestellt. Es ist eine
+   Planungshilfe; massgebend sind die Druckanzeige im Flug, die Unterlagen des
+   Geräteherstellers und die geltenden Vorschriften. Jede Haftung für Schäden
+   aus der Nutzung ist, soweit gesetzlich zulässig, ausgeschlossen. Anwendbar
+   ist schweizerisches Recht.
+
+ENGLISH
+
+1. Inspection. The source code is published for inspection ("source-available").
+   Reading and studying the source code is permitted.
+
+2. Consent. Any further use of the work or parts of it — in particular running it
+   on your own systems, copying, modifying, translating, distributing, making it
+   publicly available, incorporating it into other works, and any commercial
+   use — requires the prior express consent of the rights holder (request to
+   Balthasar Wicki / Wicki Aero GmbH).
+
+3. Attribution. Where consent is granted, the source must be credited:
+   "EDS O2-Planung — Balthasar Wicki / Wicki Aero GmbH,
+   https://github.com/bwicki/o2", both in the source code and in a place
+   visible to users (e.g. imprint, about page), and this licence file must be
+   included. The rights holder may attach further conditions to the consent and
+   may revoke it with effect for the future.
+
+4. Third-party components. Bundled third-party components (qrcode-generator,
+   MIT; fonts IBM Plex Mono and Inter, SIL Open Font License 1.1) are subject to
+   their own licences; see `js/vendor` and `fonts`. Consumption figures are
+   taken from the "Cylinder Duration Chart" by Mountain High E&S Co.; "EDS" and
+   "O2D2" are that manufacturer's designations, and there is no affiliation.
+   The trademarks and logos "Wicki Aero", "Wicki Partners" and "Wicki Partners
+   Ballonteam" are not part of this licence.
+
+5. Warranty. The work is provided without any warranty. It is a planning aid;
+   the pressure gauge in flight, the equipment manufacturer's documentation and
+   the applicable regulations prevail. Any liability for damages arising from
+   its use is excluded to the extent permitted by law. Swiss law applies.

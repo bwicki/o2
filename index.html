@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EDS O2-Planung</title>
+<meta name="description" content="Sauerstoffplanung für das Mountain High EDS O2D2: Vorrat, Verbrauch und Reichweite über das Fahrtprofil.">
+<meta name="theme-color" content="#f4f5f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="O2-Planung">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="topbar">
+    <div class="title-block">
+      <div class="eyebrow"><span data-i18n="eyebrow">Sauerstoffplanung</span><span class="dev" data-i18n="eyebrowDev"> · EDS O2D2-2G</span></div>
+      <h1 data-i18n-html="title_html">EDS O<sub>2</sub>-Planung</h1>
+      <p class="subtitle"><span class="long"><span data-i18n="subtitle">Vorrat, Verbrauch und Reichweite über das Fahrtprofil</span> · </span><span id="versionStamp"></span></p>
+    </div>
+    <div class="header-right">
+      <div class="head-actions">
+        <div class="seg" id="langSeg" role="group" data-i18n-aria="aLang">
+          <button type="button" data-lang="de" aria-pressed="true">DE</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <button type="button" class="icon-btn desk" id="resetBtn" data-i18n-aria="aReset">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v5h5"/></svg>
+        </button>
+        <button type="button" class="icon-btn desk" id="shareBtn" data-i18n-aria="aShare">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.5-1.5"/></svg>
+        </button>
+        <button type="button" class="icon-btn desk" id="printBtn" data-i18n-aria="aPrint">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+        </button>
+        <button type="button" class="icon-btn desk" id="legendBtn" data-i18n-aria="aLegend">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg>
+        </button>
+        <div class="menu-wrap">
+          <button type="button" class="icon-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" data-i18n-aria="aMenu">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+          </button>
+          <div id="menu" class="menu" hidden></div>
+        </div>
+      </div>
+      <img class="header-logo" alt="Wicki Partners Ballonteam" src="img/wicki-logo.png">
+    </div>
+  </header>
+
+  <div class="linkbar">
+    <div class="lb-main">
+      <label class="lb-label" for="shareUrl" data-i18n="myCalc">Meine Berechnung</label>
+      <input id="shareUrl" type="text" readonly>
+    </div>
+    <button type="button" class="primary-btn" id="copyBtn" data-i18n="copyLink">Link kopieren</button>
+    <button type="button" class="qr-btn" id="qrBtn" data-i18n-aria="aQr"></button>
+    <span class="lb-status" id="saveStatus" role="status"></span>
+    <span class="spacer"></span>
+    <button type="button" class="btn" id="trackBtn" data-i18n="track">Stand nachführen</button>
+    <button type="button" class="btn ghost" id="newBtn" data-i18n="newCalc">Neue Berechnung</button>
+  </div>
+  <div id="notice" class="notice" role="status" hidden></div>
+
+  <main class="cols">
+    <div class="col-in">
+
+      <section class="panel" id="panelCyl" aria-labelledby="hCyl">
+        <div class="panel-head">
+          <h2 id="hCyl"><span class="step">1</span><span data-i18n="supply">Sauerstoffvorrat</span></h2>
+          <div class="seg small" id="pUnitSeg" role="group">
+            <button type="button" data-unit="bar" aria-pressed="true">bar</button>
+            <button type="button" data-unit="psi" aria-pressed="false">psi</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table class="grid" id="cylTable">
+              <thead><tr>
+                <th class="l" data-i18n="thNr">Nr.</th><th data-i18n="thSize">Grösse L</th><th id="thCylP">Druck bar</th>
+                <th class="hide-phone" data-i18n="thContent">Inhalt L</th><th data-i18n="thUsable">nutzbar L</th>
+                <th><span class="sr" data-i18n="remove">Entfernen</span></th>
+              </tr></thead>
+              <tbody id="cylBody"></tbody>
+            </table>
+          </div>
+          <p class="hint" id="cylHint"></p>
+        </div>
+      </section>
+
+      <div class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15"/><path d="M6 13l6 6 6-6"/></svg></div>
+
+      <section class="panel collapsible collapsed" id="panelSet" aria-labelledby="hSet">
+        <div class="panel-head">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="bodySet">
+            <span class="tt"><span class="ptitle" id="hSet"><span class="step">2</span><span data-i18n="settings">Einstellungen</span></span><span class="panel-sum" id="setSum"></span></span>
+            <svg class="chev" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="panel-body" id="bodySet">
+          <div class="fields">
+            <div class="field"><label for="setPersons" data-i18n="fPersons">Personen</label><input class="in key" id="setPersons" type="text" inputmode="numeric" autocomplete="off"></div>
+            <div class="field"><label for="setSf" data-i18n="fSf">Sicherheit %</label><input class="in key" id="setSf" type="text" inputmode="decimal" autocomplete="off"></div>
+            <div class="field"><label for="setStart" id="lblStart"></label><input class="in key" id="setStart" type="text" inputmode="numeric" autocomplete="off"></div>
+            <div class="field"><label for="setRest" id="lblRest"></label><input class="in" id="setRest" type="text" inputmode="numeric" autocomplete="off"></div>
+            <div class="field"><label for="setClimb" data-i18n="fClimb">Steigen m/s</label><input class="in" id="setClimb" type="text" inputmode="decimal" autocomplete="off"></div>
+            <div class="field"><label for="setSink" data-i18n="fSink">Sinken m/s</label><input class="in" id="setSink" type="text" inputmode="decimal" autocomplete="off"></div>
+          </div>
+          <p class="hint" data-i18n="deliveryHint"></p>
+          <p class="hint" id="factorLine" hidden></p>
+        </div>
+      </section>
+
+      <div class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15"/><path d="M6 13l6 6 6-6"/></svg></div>
+
+      <section class="panel collapsible collapsed" id="panelProf" aria-labelledby="hProf">
+        <div class="panel-head">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="bodyProf">
+            <span class="tt"><span class="ptitle" id="hProf"><span class="step">3</span><span data-i18n="profile">Fahrtprofil</span></span><span class="panel-sum" id="profSum"></span></span>
+            <svg class="chev" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="seg small" id="altUnitSeg" role="group">
+            <button type="button" data-unit="m" aria-pressed="false">m</button>
+            <button type="button" data-unit="ft" aria-pressed="true">ft / FL</button>
+          </div>
+        </div>
+        <div class="panel-body" id="bodyProf">
+          <div class="table-wrap">
+            <table class="grid" id="profTable">
+              <thead><tr>
+                <th class="l" data-i18n="thLevel">Höhenstufe</th><th data-i18n="thAlt">Höhe</th><th data-i18n="thDur">Dauer h:mm</th>
+                <th><span class="sr" data-i18n="remove">Entfernen</span></th>
+              </tr></thead>
+              <tbody id="profBody"></tbody>
+            </table>
+          </div>
+          <p class="hint" data-i18n="profHint"></p>
+        </div>
+      </section>
+
+      <div class="to-result"><span data-i18n="result">Resultat</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></div>
+    </div>
+
+    <div class="col-out collapsible collapsed" id="colOut">
+      <button type="button" class="panel-toggle res-toggle" aria-expanded="false">
+        <span class="tt"><span class="ptitle"><span class="step" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></span><span data-i18n="resToggle">Resultat · Verbrauch je Höhenstufe</span></span><span class="panel-sum" id="rowsSum"></span></span>
+        <svg class="chev" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="result-head">
+        <h2><span class="step" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></span><span data-i18n="result">Resultat</span></h2>
+      </div>
+      <section class="balance" id="balance" aria-live="polite"></section>
+      <div class="warns" id="warns"></div>
+      <section class="panel" aria-labelledby="hChart">
+        <h2 id="hChart" data-i18n="chartTitle">Verlauf · Höhe und Restvorrat</h2>
+        <div class="chart" id="chart"></div>
+      </section>
+      <section class="panel" aria-labelledby="hRows">
+        <h2 id="hRows"></h2>
+        <div class="table-wrap"><table class="grid rows" id="rowsTable"></table></div>
+        <p class="hint" id="rowsHint"></p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span><span data-i18n-html="srcLine_html"></span> · <button type="button" id="legendLink" data-i18n="legendLink">Legende</button></span>
+    <span data-i18n="disclaimer"></span>
+    <span id="footVersion"></span>
+  </footer>
+</div>
+
+<div class="bottombar" id="bottombar"></div>
+
+<dialog id="dlgLegend" aria-labelledby="lgTitle"></dialog>
+<dialog id="dlgTrack" class="sheet" aria-labelledby="trTitle"></dialog>
+<dialog id="dlgQr" aria-labelledby="qrTitle"></dialog>
+<dialog id="dlgConfirm"></dialog>
+
+<div id="printSheet" class="print-sheet" aria-hidden="true"></div>
+
+<script src="js/config.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

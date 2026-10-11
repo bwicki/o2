@@ -1,0 +1,35 @@
+# Deployt den Speicher-Server bei jeder Änderung unter worker/.
+# Benötigt die Repository-Secrets CLOUDFLARE_API_TOKEN und CLOUDFLARE_ACCOUNT_ID (siehe SETUP.md).
+# Solange «Setup worker» noch nicht gelaufen ist (Platzhalter-ID in wrangler.toml), wird nichts deployt.
+name: Deploy worker
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**']
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Eingerichtet?
+        id: ready
+        run: |
+          if grep -q '^id = "00000000000000000000000000000000"' worker/wrangler.toml; then
+            echo "::notice::Speicher-Server noch nicht eingerichtet – zuerst «Setup worker» ausführen (SETUP.md)."
+            echo "ok=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=1" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v5
+        if: steps.ready.outputs.ok == '1'
+        with:
+          node-version: 22
+      - name: Deploy
+        if: steps.ready.outputs.ok == '1'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy
