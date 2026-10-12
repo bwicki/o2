@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.1.2 — 2026-10-12
+
+- Favicon und App-Symbole: Variante 4 (O₂-Ring in vier Farben mit tiefgestellter 2) im Stil von GaforCast und Fahrtbriefing; zusätzlich `favicon.ico`.
+
 ## 0.1.1 — 2026-10-12
 
 - Lizenz: eigener Abschnitt zu den Grundlagendaten von Mountain High (Herkunft, Rechte, eigener Anteil, keine Gewähr, keine Verbindung).

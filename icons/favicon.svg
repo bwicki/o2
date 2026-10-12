@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#b96f14"/><circle cx="26" cy="31" r="14" fill="none" stroke="#1a1200" stroke-width="6"/><path d="M44 37.5a4.9 4.9 0 1 1 8.6 3.2L44.6 47h9.6" fill="none" stroke="#1a1200" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="EDS O2-Planung">
+  <rect width="100" height="100" rx="22" fill="#f2f4f7"/><rect x=".75" y=".75" width="98.5" height="98.5" rx="21.4" fill="none" stroke="#d7dce3" stroke-width="1.5"/>
+  <path d="M18.06 44.40A23 23 0 0 1 39.40 23.06" fill="none" stroke="#1d8a56" stroke-width="12"/>
+  <path d="M42.60 23.06A23 23 0 0 1 63.94 44.40" fill="none" stroke="#6d9418" stroke-width="12"/>
+  <path d="M63.94 47.60A23 23 0 0 1 42.60 68.94" fill="none" stroke="#b96f14" stroke-width="12"/>
+  <path d="M39.40 68.94A23 23 0 0 1 18.06 47.60" fill="none" stroke="#d1631a" stroke-width="12"/>
+  <path d="M68 66a8.2 8.2 0 1 1 14.4 5.4L68.6 84H85" fill="none" stroke="#222b38" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
