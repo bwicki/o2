@@ -29,6 +29,11 @@ async def shot(page, name, **kw):
         await page.screenshot(path=f'{SHOTS}/{name}.png', **kw)
 
 
+async def no_server(ctx):
+    """Gerätemodus erzwingen: Diese Prüfung läuft ohne Speicher-Server (der Fall mit Server steht in ui.server.py)."""
+    await ctx.route('**/js/config.js', lambda r: r.fulfill(content_type='text/javascript', body="window.O2_CONFIG = { apiBase: '' };"))
+
+
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
@@ -36,6 +41,7 @@ async def main():
 
         # ---------- Desktop ----------
         ctx = await b.new_context(viewport={'width': 1280, 'height': 900})
+        await no_server(ctx)
         await ctx.grant_permissions(['clipboard-read', 'clipboard-write'])
         pg = await ctx.new_page()
         pg.on('pageerror', lambda e: errors.append(str(e)))
@@ -53,7 +59,7 @@ async def main():
         check(await pg.evaluate('location.hash') == '', 'ohne Änderung kein Kurzcode')
         check('Beispielwerte' in await pg.inner_text('#saveStatus'), 'Hinweis «Beispielwerte»')
         check(await pg.locator('#qrBtn svg').count() == 1, 'QR-Code neben «Link kopieren»')
-        check(await pg.inner_text('#versionStamp') == 'v0.1.0', 'Versionsnummer in der Kopfzeile')
+        check(re.fullmatch(r'v\d+\.\d+\.\d+', await pg.inner_text('#versionStamp')) is not None, 'Versionsnummer in der Kopfzeile')
         check('mhoxygen.com' in await pg.get_attribute('.footer a', 'href'), 'Quellenlink Mountain High in der Fusszeile')
         await shot(pg, 'desktop', full_page=True)
 
@@ -75,6 +81,7 @@ async def main():
         await pg.wait_for_timeout(400)
         check(await p1.input_value() == '180', 'Stand nach Neuladen vom Gerät')
         ctx2 = await b.new_context(viewport={'width': 1280, 'height': 900})
+        await no_server(ctx2)
         other = await ctx2.new_page()
         await other.goto(link)
         await other.wait_for_timeout(500)
@@ -197,6 +204,7 @@ async def main():
         # ---------- Handy ----------
         print('Handy')
         ctx3 = await b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, has_touch=True)
+        await no_server(ctx3)
         ph = await ctx3.new_page()
         ph.on('pageerror', lambda e: errors.append(str(e)))
         await ph.goto(BASE)

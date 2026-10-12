@@ -2,7 +2,7 @@
  * VERSION muss zu js/version.js passen (ein Test prüft das): neue Version → neuer Cache, alte werden gelöscht.
  * Statische Dateien: zuerst Netz (damit Aktualisierungen sofort ankommen), bei Ausfall der Cache.
  * Aufrufe des Speicher-Servers (anderer Ursprung) laufen immer über das Netz. */
-const VERSION = 'o2-v0.1.0';
+const VERSION = 'o2-v0.1.1';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css', 'css/print.css', 'img/wicki-logo.png',
   'icons/favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',

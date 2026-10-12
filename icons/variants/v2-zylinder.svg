@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="EDS O2-Planung">
+  <rect width="100" height="100" rx="22" fill="#f2f4f7"/><rect x=".75" y=".75" width="98.5" height="98.5" rx="21.4" fill="none" stroke="#d7dce3" stroke-width="1.5"/>
+  <clipPath id="z"><path d="M34 45C34 35 41 29 50 29s16 6 16 16v31a10 10 0 0 1-10 10H44a10 10 0 0 1-10-10z"/></clipPath>
+  <rect x="45.5" y="19" width="9" height="12" fill="#222b38"/>
+  <rect x="39" y="12" width="22" height="8" rx="3.4" fill="#222b38"/>
+  <g clip-path="url(#z)">
+    <rect x="30" y="27" width="40" height="16" fill="#1d8a56"/>
+    <rect x="30" y="46" width="40" height="10.5" fill="#6d9418"/>
+    <rect x="30" y="59.5" width="40" height="10.5" fill="#b96f14"/>
+    <rect x="30" y="73" width="40" height="14" fill="#d1631a"/>
+  </g>
+</svg>

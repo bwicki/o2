@@ -66,11 +66,10 @@ test('CORS nur für die eigenen Adressen', async () => {
   assert.equal((await no.json()).ok, true);
 });
 
-test('Versionsnummern stimmen überein', () => {
+test('Versionsnummern der App stimmen überein (der Worker zählt eigenständig)', () => {
   const v = /version: '([\d.]+)'/.exec(readFileSync(new URL('../js/version.js', import.meta.url), 'utf8'))[1];
   assert.match(readFileSync(new URL('../sw.js', import.meta.url), 'utf8'), new RegExp(`VERSION = 'o2-v${v.replace(/\./g, '\\.')}'`), 'sw.js');
   assert.equal(JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version, v, 'package.json');
-  assert.match(readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8'), new RegExp(`APP_VERSION = "${v.replace(/\./g, '\\.')}"`), 'wrangler.toml');
   assert.match(readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8'), new RegExp(`## ${v.replace(/\./g, '\\.')}`), 'CHANGELOG.md');
 });
 
@@ -79,4 +78,9 @@ test('Service Worker kennt alle Dateien der App-Hülle', () => {
   const list = [...sw.matchAll(/'((?:css|js|fonts|icons|img)\/[^']+)'/g)].map((m) => m[1]);
   assert.ok(list.length > 15);
   for (const f of list) assert.doesNotThrow(() => readFileSync(new URL('../' + f, import.meta.url)), f);
+});
+
+test('Worker-Version: wrangler.toml und worker/package.json gleich', () => {
+  const v = JSON.parse(readFileSync(new URL('../worker/package.json', import.meta.url), 'utf8')).version;
+  assert.match(readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8'), new RegExp(`APP_VERSION = "${v.replace(/\./g, '\\.')}"`));
 });

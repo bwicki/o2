@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.1.1 — 2026-10-12
+
+- Lizenz: eigener Abschnitt zu den Grundlagendaten von Mountain High (Herkunft, Rechte, eigener Anteil, keine Gewähr, keine Verbindung).
+- Legende: Herkunft und Revision (06/2017) der Verbrauchswerte ausdrücklich genannt.
+- README auf den Stand des Betriebs gebracht (Speicher-Server, Einrichtung, Tests, Versionen).
+- Speicher-Server über den Workflow «O2 worker» im Repository `bwicki/briefing` eingerichtet; der Worker zählt seine Version eigenständig.
+
 ## 0.1.0 — 2026-10-11
 
 Erste Fassung.
