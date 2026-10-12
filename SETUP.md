@@ -1,55 +1,61 @@
-# Einrichtung — alles im Browser
+# Setup — everything in the browser
 
-Zwei Teile: die App (GitHub Pages, Repository `bwicki/o2`) und der
-Speicher-Server für «Meine Berechnung» (Cloudflare). Die App läuft schon nach Teil 1; Teil 2 sorgt dafür,
-dass ein Kurzcode auf jedem Gerät denselben Stand zeigt.
+Two parts: the app (GitHub Pages, repository `bwicki/o2`) and the storage
+server for "My calculation" and "My configuration" (Cloudflare). The app
+already works after part 1; part 2 makes a short code show the same state on
+every device.
 
-Schlüssel und Kennwörter nie in Dateien des Repositories schreiben und nie im
-Chat weitergeben.
+Never write keys or passwords into files of the repository, and never pass
+them on in a chat.
 
-## 1 App auf GitHub Pages
+## 1 App on GitHub Pages
 
-1. Repository `bwicki/o2` → **Settings** → **Pages** → Source «Deploy from a
-   branch» → Branch `main`, Ordner `/ (root)` → **Save**.
-2. DNS für wicki.aero (Cloudflare → wicki.aero → DNS → Add record):
-   Type `CNAME`, Name `o2`, Target `bwicki.github.io`, Proxy **aus** (graue Wolke).
-3. Zurück in Settings → Pages: Custom domain `o2.wicki.aero` → **Save**. Nach
-   «DNS check successful» **Enforce HTTPS** einschalten (kann einige Minuten dauern).
-4. Prüfung: https://o2.wicki.aero zeigt die Beispielwerte und in der Kopfzeile
-   die Versionsnummer. Nach einer Änderung steht in der Zeile «Meine
-   Berechnung» «nur auf diesem Gerät» — das ist richtig, solange Teil 2 fehlt.
+1. Repository `bwicki/o2` → **Settings** → **Pages** → Source "Deploy from a
+   branch" → Branch `main`, folder `/ (root)` → **Save**.
+2. DNS for wicki.aero (Cloudflare → wicki.aero → DNS → Add record):
+   Type `CNAME`, Name `o2`, Target `bwicki.github.io`, Proxy **off** (grey cloud).
+3. Back in Settings → Pages: Custom domain `o2.wicki.aero` → **Save**. After
+   "DNS check successful", switch on **Enforce HTTPS** (may take a few minutes).
+4. Check: https://o2.wicki.aero shows the example values and the version number
+   in the header. After a change, the line "My calculation" says "saved on this
+   device only" — that is correct as long as part 2 is missing.
 
-## 2 Speicher-Server (Cloudflare Worker)
+## 2 Storage server (Cloudflare Worker)
 
-Die Cloudflare-Zugangsdaten liegen bereits als Secrets im Repository
-`bwicki/briefing`. Deshalb läuft die Einrichtung von dort aus; in `bwicki/o2`
-ist nichts einzutragen. Voraussetzung: `bwicki/o2` ist öffentlich und enthält
-den Ordner `worker/`.
+The Cloudflare credentials are already stored as secrets in the repository
+`bwicki/briefing`. The setup therefore runs from there; nothing needs to be
+entered in `bwicki/o2`. Prerequisite: `bwicki/o2` is public and contains the
+folder `worker/`.
 
-1. Repository `bwicki/briefing` → **Actions** → links «O2 worker» → rechts
-   **Run workflow** → grüner Knopf **Run workflow**.
-2. Der Lauf dauert 1–2 Minuten: Er holt den Quelltext aus `bwicki/o2`, lässt
-   die Tests laufen, legt den KV-Namespace `o2-calcs` an (oder findet ihn),
-   deployt den Worker `o2-api` und prüft ihn. Die Zusammenfassung des Laufs
-   zeigt die Adresse, in der Regel `https://o2-api.<konto>.workers.dev`.
-3. Diese Adresse steht in `bwicki/o2` in `js/config.js` als `apiBase`. Solange
-   dort `''` steht, arbeitet die App im Gerätemodus.
-4. Prüfung: https://o2.wicki.aero neu laden, einen Wert ändern — in der Zeile
-   «Meine Berechnung» steht «gespeichert». Dieselbe Adresse auf einem zweiten
-   Gerät zeigt denselben Stand.
+1. Repository `bwicki/briefing` → **Actions** → "O2 worker" on the left →
+   **Run workflow** on the right → green button **Run workflow**.
+2. The run takes 1–2 minutes: it fetches the source from `bwicki/o2`, runs the
+   tests, creates the KV namespace `o2-calcs` (or finds it), deploys the worker
+   `o2-api` and checks it. The summary of the run shows the address, normally
+   `https://o2-api.<account>.workers.dev`.
+3. This address is entered in `bwicki/o2` in `js/config.js` as `apiBase`. As
+   long as it is `''`, the app works in device-only mode.
+4. Check: reload https://o2.wicki.aero and change a value — the line "My
+   calculation" says "saved …". The same address on a second device shows the
+   same state.
 
-Bricht der Lauf ab, steht die Ursache rot im Protokoll. Der Workflow ist
-wiederholbar und fasst den Worker und die Daten des Fahrtbriefings nicht an.
+If the run fails, the cause is shown in red in the log. The workflow can be
+repeated and does not touch the worker or the data of the Fahrtbriefing app.
 
-## Aufbewahrung und Kosten
+## Retention and cost
 
-Jede Änderung verlängert die Aufbewahrung um 183 Tage; danach löscht Cloudflare
-den Eintrag selbst. Gespeichert werden nur Rechenwerte, keine Personendaten.
-Das kostenlose Cloudflare-Kontingent (1000 Schreibvorgänge und 100 000
-Lesevorgänge pro Tag) reicht für diese Nutzung.
+- **Calculations:** every change extends the retention by 183 days; after
+  that Cloudflare deletes the entry by itself.
+- **Personal configurations** (short code of your own choice): 2 years from
+  the last save or load.
+- Only calculation values, the freely chosen title and the personal
+  configuration are stored. No names or other personal data are requested.
+- The free Cloudflare allowance (1,000 writes and 100,000 reads per day) is
+  sufficient for this use.
 
-## Später
+## Later
 
-Nach Änderungen unter `worker/` den Workflow «O2 worker» im Repository
-`bwicki/briefing` erneut starten. Änderungen an der App sind 1–2 Minuten nach
-dem Commit auf o2.wicki.aero sichtbar.
+After changes under `worker/`, run the workflow "O2 worker" in the repository
+`bwicki/briefing` again. Changes to the app are visible on o2.wicki.aero 1–2
+minutes after the commit; a browser that already has the app open may show the
+old version for up to about ten minutes (menu → "Reload app (latest version)").

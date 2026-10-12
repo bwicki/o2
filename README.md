@@ -169,7 +169,7 @@ Code: `js/model.js`. The tests reproduce the manufacturer's chart to within 2 %.
 The storage server runs at `https://o2-api.balthasar.workers.dev` (check:
 `/health`). It is deployed through the workflow "O2 worker" in the repository
 [`bwicki/briefing`](https://github.com/bwicki/briefing), because the Cloudflare
-credentials are already stored there. Step-by-step setup (in German):
+credentials are already stored there. Step-by-step setup:
 [SETUP.md](SETUP.md). Changes (in German): [CHANGELOG.md](CHANGELOG.md).
 
 ## Tests
