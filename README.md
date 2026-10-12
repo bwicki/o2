@@ -18,7 +18,7 @@ dieser App (siehe [Datengrundlage](#datengrundlage) und [LICENSE](LICENSE)).
 3. **Fahrtprofil** — Höhenstufen (ft/FL oder m) mit Dauer. Steigen und Sinken
    zwischen den Stufen ergänzt die App selbst.
 4. **Resultat** — Bilanz (Vorrat, Bedarf, Reserve, Reichweite), Verlauf von Höhe
-   und Restvorrat, Verbrauch je Höhenstufe.
+   und Restvorrat mit den Zylinderwechseln, Verbrauch je Höhenstufe.
 
 Eingaben: Höhe als `FL120`, `120` oder `12000`; unter 5000 ft in Fuss. Dauer als
 `2:30` oder `2.5`. Beginnhöhe als Zahl in Metern; `9000 ft` oder `FL090` stellt
@@ -26,6 +26,14 @@ auf Fuss um.
 
 Weitere Funktionen:
 
+- **Titel der Fahrt** (fakultativ) — erscheint im Fenstertitel, im Druck und
+  in der Liste «Meine Berechnungen» im Menü.
+- **Zylinderwechsel-Plan** — alle Personen atmen aus demselben Zylinder; die
+  Zylinder werden in der erfassten Reihenfolge geleert. Jeder Wechsel steht als
+  gestrichelte Linie mit Zeitpunkt im Verlauf und als Zeile darunter.
+- **Sauerstoffregel** — Meldung, wenn das Profil ohne Sauerstoff über 13 000 ft
+  führt oder länger als 30 Minuten zwischen 10 000 und 13 000 ft bleibt (nur
+  möglich, wenn die Beginnhöhe über diesen Grenzen liegt).
 - **Stand nachführen** — im Flug die Dauer auf der aktuellen Höhenstufe und den
   abgelesenen Druck eingeben. Die App vergleicht mit dem Plan, bildet daraus
   einen Verbrauchsfaktor und rechnet den Rest der Fahrt neu.
@@ -49,9 +57,43 @@ andere die App benutzt haben.
   verlängert die Aufbewahrung um 183 Tage (rund 6 Monate); danach wird der
   Eintrag gelöscht.
 - Gespeichert werden nur Rechenwerte (Zylinder, Einstellungen, Höhenstufen,
-  Nachführ-Einträge), keine Personendaten.
+  Nachführ-Einträge) und der frei gewählte Titel.
 - Ist der Server nicht erreichbar, arbeitet die App auf dem Gerät weiter
   («nur auf diesem Gerät»), und der kopierte Link trägt den Stand als Anhang mit.
+
+## «Meine Konfiguration»: persönlicher Kurzcode
+
+Vorrat (1) und Einstellungen (2) lassen sich unter einem selbst gewählten
+Kurzcode ablegen, zum Beispiel `bwi`: 3 bis 20 Buchstaben oder Ziffern, ohne
+Kennwort.
+
+- **Speichern** legt den Kurzcode an. Jeder Kurzcode wird nur einmal vergeben.
+- **Laden** holt die Konfiguration auf jedes Gerät. Das Gerät merkt sich den
+  Kurzcode; neue Berechnungen beginnen dort mit der eigenen Konfiguration
+  statt mit den Beispielwerten für 1 und 2.
+- Ändern: laden, anpassen, speichern. Unter einem vergebenen Kurzcode lässt
+  sich erst speichern, nachdem er auf dem Gerät geladen wurde. Das schützt vor
+  versehentlichem Überschreiben, nicht vor Absicht: Wer den Kurzcode kennt,
+  kann die Konfiguration laden und ändern.
+- Nicht Teil der Konfiguration: Fahrtprofil, Titel und Verbrauchsfaktor.
+- Aufbewahrung: 2 Jahre ab dem letzten Speichern oder Laden.
+
+## Übernahme aus dem Fahrtbriefing
+
+Im [Fahrtbriefing](https://briefing.wicki.aero) (Gasfahrt, Panel
+«Fahrtprofil») öffnet der Knopf «O₂-Planung» diese App mit dem Höhenprofil
+der Fahrt. Übergeben werden Höhenstufen in ft (Druckhöhe) mit Dauer und ein
+Titel, als Anhang der Adresse: `o2.wicki.aero/#i.<Anhang>`. Die App legt daraus
+eine neue Berechnung an; Vorrat und Einstellungen kommen aus der eigenen
+Konfiguration oder den Beispielwerten.
+
+Ein übernommener Verlauf enthält Steigen und Sinken bereits als Teilstufen.
+Die App ergänzt dann keine eigenen Übergänge und keinen Abstieg am Schluss
+(im Abschnitt Fahrtprofil umschaltbar).
+
+Format des Anhangs: base64url von
+`{"v":1,"t":"Titel","l":[[Höhe ft, Dauer h],…],"s":1}`; `s: 1` heisst «Verlauf
+ohne zu ergänzende Übergänge». Höchstens 30 Höhenstufen.
 
 ## Datengrundlage
 
@@ -83,6 +125,8 @@ Eigene Ableitungen und Annahmen (nicht vom Hersteller):
   ist über die Höhe gemittelt.
 - **Zylinderinhalt** mit dem Realgasfaktor von Sauerstoff bei 15 °C, bezogen auf
   1.013 bar und 21 °C. Nutzbar ist der Inhalt bis zum Restdruck (Vorgabe 15 bar).
+- **Zylinderwechsel**: Zeitpunkt, zu dem der Verbrauch (ohne Zuschlag) den
+  nutzbaren Inhalt der bisherigen Zylinder erreicht.
 - **Bedarf** = Verbrauch × Personen × (1 + Sicherheitszuschlag).
   **Reichweite** = Reserve ÷ Verbrauch auf der höchsten Höhenstufe.
 - Status: «genügend», wenn der Vorrat auch den Zuschlag deckt; «knapp», wenn er
@@ -117,8 +161,8 @@ Schritt: [SETUP.md](SETUP.md). Änderungen: [CHANGELOG.md](CHANGELOG.md).
   GitHub-Workflow «Tests»).
 - `python3 test/ui.smoke.py http://localhost:8080/ <Ordner>` — Oberfläche auf
   Desktop und Handy, Druck (benötigt Playwright; vorher `npm run serve`).
-- `python3 test/ui.server.py` — zwei Geräte gegen einen lokalen Ersatz-Server
-  (`node test/dev-api.mjs`).
+- `python3 test/ui.server.py` — zwei Geräte und der persönliche Kurzcode gegen
+  einen lokalen Ersatz-Server (`node test/dev-api.mjs`).
 
 ## Neue Version
 

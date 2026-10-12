@@ -124,3 +124,74 @@ test('Einheiten: Höhen, Dauer, Druck', () => {
   assert.ok(Number.isNaN(parseDur('1:75')));
   assert.equal(pText(200, 'psi'), '2901'); near(pFromUnit(2901, 'psi'), 200, 0.05);
 });
+
+/* ---------- 0.2.0: Zylinderwechsel, Sauerstoffregel, Profil ohne ergänzte Übergänge ---------- */
+const base = () => ({
+  cylinders: [{ nr: '1', size: 2, p: 200 }, { nr: '2', size: 2, p: 185 }], persons: 2, sfPct: 10, startM: 2800, restBar: 15,
+  climb: 1.5, sink: 2, factor: 1, levels: [{ alt: 8000, dur: 2 }, { alt: 12000, dur: 3 }, { alt: 15000, dur: 2 }, { alt: 10000, dur: 1 }],
+});
+
+test('Zylinderwechsel: Beispiel braucht keinen Wechsel, der erste Zylinder reicht', () => {
+  const r = compute(base());
+  assert.equal(r.switches.length, 0);
+  assert.equal(r.emptyAt, null);
+  assert.equal(r.cylPlan.length, 2);
+  assert.ok(Math.abs(r.cylPlan[0].used - r.cons) < 1e-6 && r.cylPlan[1].used === 0);
+});
+
+test('Zylinderwechsel: Zeitpunkt liegt dort, wo der Verbrauch den ersten Zylinder aufbraucht', () => {
+  const inp = base(); inp.persons = 4;                               // doppelter Verbrauch: 668 L bei 402 + 371 L
+  const r = compute(inp);
+  assert.equal(r.switches.length, 1);
+  const sw = r.switches[0];
+  assert.equal(sw.from, '1'); assert.equal(sw.to, '2');
+  // Kontrolle: Verbrauch bis zum Wechsel = nutzbarer Inhalt von Zylinder 1
+  let t = 0, c = 0;
+  for (const row of r.rows) { const d = Math.min(row.dur, Math.max(0, sw.t - t)); c += row.dur > 0 ? row.cons * d / row.dur : 0; t += row.dur; }
+  assert.ok(Math.abs(c - r.cyl[0].usable) < 0.5, `Verbrauch bis Wechsel ${c} statt ${r.cyl[0].usable}`);
+  assert.ok(sw.t > 4 && sw.t < 7, `Wechsel nach ${sw.t} h`);
+  assert.equal(r.emptyAt, null);
+  assert.ok(Math.abs(r.cylPlan[1].left - r.endRest) < 1e-6);
+});
+
+test('Zylinderwechsel: leere Zylinder werden übersprungen, «leer» wird gemeldet', () => {
+  const inp = base(); inp.persons = 6;
+  inp.cylinders = [{ nr: 'A', size: 2, p: 200 }, { nr: 'B', size: 2, p: 10 }, { nr: 'C', size: 1, p: 150 }];
+  const r = compute(inp);
+  assert.deepEqual(r.switches.map((s) => s.from + '>' + s.to), ['A>C']);
+  assert.ok(r.emptyAt > r.switches[0].t && r.emptyAt < r.durTotal);
+  assert.equal(r.status, 'short');
+});
+
+test('Sauerstoffregel: Vorgabe 2800 m verletzt nichts', () => {
+  const r = compute(base());
+  assert.equal(r.rule.violated, false);
+  assert.equal(r.rule.above13H, 0);
+});
+
+test('Sauerstoffregel: Beginnhöhe über 13 000 ft', () => {
+  const inp = base(); inp.startM = 14000 / FT_PER_M;                 // Sauerstoff erst ab 14 000 ft
+  inp.levels = [{ alt: 12000, dur: 1 }, { alt: 13500, dur: 0.25 }, { alt: 15000, dur: 1 }];
+  const r = compute(inp);
+  assert.ok(r.rule.violated);
+  assert.ok(r.rule.band10H > 1, 'eine Stunde auf 12 000 ft plus Anteile der Übergänge');
+  assert.ok(r.rule.above13H > 0.25 && r.rule.above13H < 0.4, `über 13 000 ft ohne Sauerstoff: ${r.rule.above13H}`);
+});
+
+test('Sauerstoffregel: bis 30 Minuten zwischen 10 000 und 13 000 ft zulässig', () => {
+  const inp = base(); inp.startM = 13000 / FT_PER_M; inp.trans = false;
+  inp.levels = [{ alt: 9000, dur: 2 }, { alt: 12000, dur: 0.5 }, { alt: 9000, dur: 1 }];
+  assert.equal(compute(inp).rule.violated, false);
+  inp.levels[1].dur = 0.6;
+  assert.equal(compute(inp).rule.violated, true);
+});
+
+test('Profil ohne ergänzte Übergänge: nur die Höhenstufen zählen', () => {
+  const inp = base(); inp.trans = false;
+  const r = compute(inp);
+  assert.equal(r.rows.length, 4);
+  assert.ok(r.rows.every((x) => x.type === 'level'));
+  assert.equal(r.durTotal, 8);
+  const withTrans = compute(base());
+  assert.ok(withTrans.cons > r.cons && withTrans.durTotal > 8);
+});

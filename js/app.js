@@ -3,7 +3,7 @@ import { APP } from './version.js';
 import { compute, track, FT_PER_M, EDS_CANNULA, EDS_MASK } from './model.js';
 import { altText, parseAlt, durText, parseDur, pToUnit, pFromUnit, pText, toNum } from './units.js';
 import { t, setLang, getLang, applyStatic } from './i18n.js';
-import { newId, prefs, local, remote, encodeSnap, parseHash, KEEP_DAYS } from './store.js';
+import { newId, prefs, local, remote, profile, encodeSnap, parseHash, parseImport, KEEP_DAYS, PCODE_RE } from './store.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -25,10 +25,10 @@ ICON.statusOf = (s) => ICON[s] || ICON.none;
 
 /* ---------- Zustand ---------- */
 const DEFAULTS = () => ({
-  v: 1, id: null, rev: 0, updated: null,
+  v: 1, id: null, rev: 0, updated: null, title: '',
   units: { p: 'bar', alt: 'ft' },
   cyl: [{ nr: '1', size: 2, p: 200 }, { nr: '2', size: 2, p: 185 }],
-  set: { persons: 2, sf: 10, startM: 2800, startU: 'm', rest: 15, climb: 1.5, sink: 2, factor: 1 },
+  set: { persons: 2, sf: 10, startM: 2800, startU: 'm', rest: 15, climb: 1.5, sink: 2, factor: 1, trans: true },
   prof: [{ alt: 8000, dur: 2 }, { alt: 12000, dur: 3 }, { alt: 15000, dur: 2 }, { alt: 10000, dur: 1 }],
   log: [],
 });
@@ -37,12 +37,12 @@ function normalize(o) {
   const d = DEFAULTS(), s = (o && o.set) || {};
   o = o || {};
   return {
-    v: 1, id: o.id || null, rev: +o.rev || 0, updated: o.updated || null,
+    v: 1, id: o.id || null, rev: +o.rev || 0, updated: o.updated || null, title: typeof o.title === 'string' ? o.title.slice(0, 60) : '',
     units: { p: o.units && o.units.p === 'psi' ? 'psi' : 'bar', alt: o.units && o.units.alt === 'm' ? 'm' : 'ft' },
     cyl: (Array.isArray(o.cyl) && o.cyl.length ? o.cyl : d.cyl).slice(0, 24).map((c, i) => ({ nr: String(c.nr == null ? i + 1 : c.nr).slice(0, 8), size: clampNum(c.size, 2, 0, 200), p: clampNum(c.p, 0, 0, 400) })),
     set: {
       persons: Math.round(clampNum(s.persons, d.set.persons, 1, 20)), sf: clampNum(s.sf, d.set.sf, 0, 300), startM: clampNum(s.startM, d.set.startM, 0, 12000), startU: s.startU === 'ft' ? 'ft' : 'm',
-      rest: clampNum(s.rest, d.set.rest, 0, 300), climb: clampNum(s.climb, d.set.climb, 0.1, 20), sink: clampNum(s.sink, d.set.sink, 0.1, 20), factor: clampNum(s.factor, 1, 0.1, 10),
+      rest: clampNum(s.rest, d.set.rest, 0, 300), climb: clampNum(s.climb, d.set.climb, 0.1, 20), sink: clampNum(s.sink, d.set.sink, 0.1, 20), factor: clampNum(s.factor, 1, 0.1, 10), trans: s.trans !== false,
     },
     prof: (Array.isArray(o.prof) ? o.prof : d.prof).slice(0, 30).map((l) => ({ alt: clampNum(l.alt, 0, 0, 60000), dur: clampNum(l.dur, 0, 0, 200) })),
     log: Array.isArray(o.log) ? o.log.slice(-20) : [],
@@ -55,7 +55,7 @@ const sync = { state: 'demo', time: null, expires: null };       // demo | savin
 let saveTimer = null;
 
 function inputOf(s) {
-  return { cylinders: s.cyl, persons: s.set.persons, sfPct: s.set.sf, startM: s.set.startM, restBar: s.set.rest, climb: s.set.climb, sink: s.set.sink, factor: s.set.factor, levels: s.prof };
+  return { cylinders: s.cyl, persons: s.set.persons, sfPct: s.set.sf, startM: s.set.startM, restBar: s.set.rest, climb: s.set.climb, sink: s.set.sink, factor: s.set.factor, trans: s.set.trans, levels: s.prof };
 }
 
 // Beginnhöhe: eigene Einheit (Vorgabe Meter), unabhängig von der Einheit des Fahrtprofils
@@ -65,6 +65,83 @@ const aT = (ft) => altText(ft, S.units.alt);
 const locale = () => (getLang() === 'en' ? 'en-GB' : 'de-CH');
 const timeText = (iso) => (iso ? new Date(iso).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) : '');
 const dateText = (d) => new Date(d).toLocaleDateString(locale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+/* ---------- Persönliche Konfiguration (Kurzcode für Vorrat und Einstellungen) ---------- */
+const pc = { code: prefs.get().pc || '', msg: null };              // msg: { key, vars, cls }
+const CFG_KEYS = ['persons', 'sf', 'startM', 'startU', 'rest', 'climb', 'sink'];
+const cfgOf = (s) => ({ units: { ...s.units }, cyl: s.cyl.map((c) => ({ nr: c.nr, size: c.size, p: c.p })), set: { ...Object.fromEntries(CFG_KEYS.map((k) => [k, s.set[k]])), factor: 1 } });
+const cfgKey = (c) => JSON.stringify([c.units.p, c.units.alt, c.cyl.map((x) => [x.nr, x.size, x.p]), CFG_KEYS.map((k) => c.set[k])]);
+function applyCfg(target, data) {
+  const n = normalize({ units: data.units, cyl: data.cyl, set: data.set, prof: [] });
+  target.units = n.units; target.cyl = n.cyl;
+  CFG_KEYS.forEach((k) => { target.set[k] = n.set[k]; });
+  return target;
+}
+/** Ausgangsstand einer neuen Berechnung: Beispielwerte, auf diesem Gerät mit der eigenen Konfiguration für 1 und 2. */
+function freshState() {
+  const d = DEFAULTS(), cached = pc.code ? profile.cached(pc.code) : null;
+  return cached ? applyCfg(d, cached) : d;
+}
+const pcApplied = () => !!(pc.code && profile.cached(pc.code));
+function pcRemember(code, data) {
+  const known = prefs.get().pcKnown || [];
+  prefs.set({ pc: code, pcKnown: known.includes(code) ? known : [...known, code].slice(-10) });
+  pc.code = code; profile.cache(code, data); $('pcInput').value = code;
+}
+function pcSay(key, vars, cls) { pc.msg = key ? { key, vars, cls: cls || '' } : null; renderPc(); }
+function renderPc() {
+  const inp = $('pcInput');
+  if (!inp.value && document.activeElement !== inp) inp.value = pc.code;   // Getipptes nie überschreiben
+  inp.placeholder = t('pcPh');
+  $('pcForget').hidden = !pc.code;
+  const st = $('pcStatus');
+  st.textContent = pc.msg ? t(pc.msg.key, pc.msg.vars) : t('pcHint');
+  st.className = 'pc-status ' + (pc.msg ? pc.msg.cls : '');
+  st.hidden = !pc.msg && !!pc.code;                                  // Erklärung nur, solange noch kein Kurzcode gemerkt ist
+}
+function pcRead() {
+  const code = $('pcInput').value.trim().toLowerCase();
+  $('pcInput').value = code;
+  if (!PCODE_RE.test(code)) { pcSay('pcBad', null, 'bad'); return null; }
+  return code;
+}
+async function pcLoad() {
+  const code = pcRead(); if (!code) return;
+  const res = await profile.get(code);
+  if (res === null) { pcSay('pcUnknown', { code }); return; }
+  let data = res && res.data, fromCache = false;
+  if (!data) { data = profile.cached(code); fromCache = true; }
+  if (!data) { pcSay('pcOffline', null, 'bad'); return; }
+  if (S.id && cfgKey(cfgOf(S)) !== cfgKey(applyCfg(DEFAULTS(), data)) && !(await confirmDlg(t('pcConfirmLoad', { code }), t('pcYesLoad')))) return;
+  pcRemember(code, data);
+  applyCfg(S, data);
+  if (S.id) touch();
+  renderInputs(); renderResults();
+  pcSay(fromCache ? 'pcLoadedCache' : 'pcLoaded', { code }, 'ok');
+}
+async function pcSave() {
+  const code = pcRead(); if (!code) return;
+  const known = (prefs.get().pcKnown || []).includes(code), data = cfgOf(S);
+  const res = await profile.put(code, data, !known);                 // unbekannt auf diesem Gerät: nur anlegen, nie überschreiben
+  if (res === 'taken') { pcSay('pcTaken', { code }, 'bad'); return; }
+  if (!res) { pcSay('pcOffline', null, 'bad'); return; }
+  pcRemember(code, data);
+  pcSay(res.created ? 'pcCreated' : 'pcSaved', { code, time: timeText(res.updated) }, 'ok');
+  renderLink();
+}
+function pcForget() {
+  prefs.set({ pc: '' }); pc.code = ''; $('pcInput').value = '';
+  pcSay('pcForgot'); renderLink();
+}
+/** Beim Start: die gemerkte Konfiguration vom Server auffrischen; eine noch unveränderte neue Berechnung zieht nach. */
+async function pcRefresh() {
+  const code = pc.code; if (!code) return;
+  const before = profile.cached(code), res = await profile.get(code);
+  if (!res || !res.data || pc.code !== code) return;
+  profile.cache(code, res.data);
+  const pristine = !S.id && (!before || cfgKey(cfgOf(S)) === cfgKey(applyCfg(DEFAULTS(), before)));
+  if (pristine && cfgKey(cfgOf(S)) !== cfgKey(applyCfg(DEFAULTS(), res.data))) { applyCfg(S, res.data); renderInputs(); renderResults(); }
+}
 
 /* ---------- Speichern ---------- */
 function touch() {
@@ -93,7 +170,17 @@ async function loadFromHash() {
   const { id, snap } = parseHash(location.hash);
   clearTimeout(saveTimer);
   hideNotice();
-  if (!id) { S = DEFAULTS(); sync.state = 'demo'; renderAll(); return; }
+  if (/^#i\./.test(location.hash)) {                                 // Fahrtprofil aus einer anderen App (Fahrtbriefing)
+    const imp = parseImport(location.hash);
+    S = freshState(); sync.state = 'demo';
+    if (!imp) { history.replaceState(null, '', baseUrl()); renderAll(); showNotice(t('importBad')); return; }
+    S.prof = imp.levels; S.title = imp.title; S.set.trans = !imp.steps;
+    touch();                                                         // legt den Kurzcode an und ersetzt den Übergabe-Link in der Adresse
+    renderAll();
+    showNotice(t('imported', { n: S.prof.length }));
+    return;
+  }
+  if (!id) { S = freshState(); sync.state = 'demo'; renderAll(); return; }
   let best = local.load(id);
   if (snap && (!best || (snap.updated || '') > (best.updated || ''))) best = { ...snap, id };
   if (best) { S = normalize({ ...best, id }); sync.state = remote.configured ? 'saving' : 'local'; sync.time = S.updated; renderAll(); }
@@ -107,7 +194,7 @@ async function loadFromHash() {
     local.save(S);
     if (rem === undefined) { sync.state = 'local'; sync.time = S.updated; } else scheduleRemote(0);
   } else {
-    S = DEFAULTS(); S.id = id; sync.state = 'demo';
+    S = freshState(); S.id = id; sync.state = 'demo';
     showNotice(t('notFound', { id }));
   }
   renderAll();
@@ -127,6 +214,9 @@ function renderInputs() {
   document.querySelectorAll('#pUnitSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.unit === pu)));
   document.querySelectorAll('#altUnitSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.unit === au)));
   $('thCylP').textContent = t('thP', { u: pu });
+  const ti = $('calcTitle'); if (document.activeElement !== ti) ti.value = S.title || '';
+  ti.placeholder = t('titlePh');
+  renderPc();
 
   $('cylBody').innerHTML = S.cyl.map((c, i) => `
     <tr data-i="${i}">
@@ -184,9 +274,15 @@ function renderResults() {
   $('profSum').textContent = !S.prof.length ? t('profSum0') : t(S.prof.length === 1 ? 'profSum1' : 'profSum', { n: S.prof.length, dur: durText(R.durTotal), alt: aT(R.maxAlt) });
   $('rowsSum').textContent = t('rowsSum', { cons: f0(R.cons), need: f0(R.need) });
 
+  document.title = S.title ? t('docTitleWith', { title: S.title }) : t('docTitle');
+  const ph = $('profHint');
+  if (S.set.trans === false) ph.innerHTML = `${esc(t('transOff'))} <button type="button" id="transOn">${esc(t('transOn'))}</button>`; else ph.textContent = t('profHint');
+
   renderBalance();
   renderWarns();
   $('chart').innerHTML = chartSvg();
+  const sl = $('switchLine'), sw = switchText();
+  sl.hidden = !sw; sl.textContent = sw || ''; sl.classList.toggle('bad', R.emptyAt != null);
   renderRows();
   renderBottom();
   renderLink();
@@ -209,8 +305,23 @@ function renderBalance() {
     <div class="stat"><div class="k">${esc(t('kRange'))}</div><div class="v">${R.rangeH != null && R.rangeH > 0 ? durText(R.rangeH) + ' h' : '–'}</div><div class="s">${R.rangeH != null ? esc(rangeSub()) : '&nbsp;'}</div></div>`;
 }
 
-function renderWarns() {
+/** Text zum Zylinderwechsel-Plan; leer, wenn es nichts zu sagen gibt (ein Zylinder, kein Verbrauch). */
+function switchText() {
+  const parts = [];
+  if (R.switches.length) parts.push(t('switchLine', { list: R.switches.map((x) => t('switchItem', { from: x.from, to: x.to, t: durText(x.t) })).join(' · ') }));
+  else if (R.cons > 0 && R.cylPlan.length > 1 && R.emptyAt == null) parts.push(t('switchNone', { nr: R.cylPlan[0].nr }));
+  if (R.emptyAt != null) parts.push(t('emptyLine', { t: durText(R.emptyAt) }));
+  return parts.join(' ');
+}
+function ruleWarns() {
   const w = [];
+  if (R.rule.above13H > 1e-6) w.push(t('wRule13', { dur: durText(R.rule.above13H), start: startText() }));
+  if (R.rule.band10H > R.rule.limitH + 1e-6) w.push(t('wRule10', { dur: durText(R.rule.band10H), start: startText() }));
+  return w;
+}
+
+function renderWarns() {
+  const w = ruleWarns();
   if (R.warn.mask) w.push(t('wMask'));
   if (R.warn.extrapHigh) w.push(t('wHigh'));
   R.warn.low.forEach((nr) => w.push(t('wLow', { nr })));
@@ -234,7 +345,7 @@ function renderRows() {
       <tr class="tot"><td class="l">${esc(t('total'))}</td><td>${durText(R.durTotal)}</td><td class="hide-phone"></td><td>${f0(R.cons)}</td><td>${f0(R.endRest)}</td><td class="hide-phone">${f0(R.endRestPct)}</td></tr>
       <tr class="add"><td class="l">${esc(t('addRow', { sf: S.set.sf }))}</td><td></td><td class="hide-phone"></td><td>${f0(R.add)}</td><td>${f0(R.reserve)}</td><td class="hide-phone">${f0(R.reservePct)}</td></tr>
     </tbody>`;
-  $('rowsHint').textContent = t('rowsHint', { c: S.set.climb.toFixed(1), s: S.set.sink.toFixed(1), start: startText() });
+  $('rowsHint').textContent = R.autoTrans ? t('rowsHint', { c: S.set.climb.toFixed(1), s: S.set.sink.toFixed(1), start: startText() }) : t('rowsHintSteps', { start: startText() });
 }
 
 function renderBottom() {
@@ -250,7 +361,7 @@ function renderLink() {
   $('shareUrl').value = showUrl();
   const st = $('saveStatus');
   let txt, cls, icon;
-  if (!S.id || sync.state === 'demo') { txt = t('stDemo'); cls = ''; icon = ''; }
+  if (!S.id || sync.state === 'demo') { txt = pcApplied() && !S.id ? t('stDemoPc', { code: pc.code }) : t('stDemo'); cls = ''; icon = ''; }
   else if (sync.state === 'saved') { txt = t('stSaved', { time: timeText(sync.time), date: dateText(sync.expires || Date.parse(sync.time) + KEEP_DAYS * 864e5) }); cls = 'ok'; icon = ICON.check; }
   else if (sync.state === 'saving') { txt = t('stSaving'); cls = ''; icon = ''; }
   else { txt = t('stLocal', { time: timeText(sync.time || S.updated) }); cls = 'local'; icon = ICON.device; }
@@ -343,7 +454,23 @@ function chartSvg() {
   const ye = yv(R.endRest);
   o += `<circle class="dot" cx="${X1}" cy="${ye.toFixed(1)}" r="3.5"/>`;
   const ey = ye + 20 < Math.max(y0, 224) - 3 ? ye + 20 : ye - 9;
-  o += `<text class="end" x="${X1 - 4}" y="${ey.toFixed(1)}" text-anchor="end">${esc(t('chartEnd', { l: f0(R.endRest), pct: f0(R.endRestPct) }))}</text>`;
+  const endTxt = t('chartEnd', { l: f0(R.endRest), pct: f0(R.endRestPct) }), endW = endTxt.length * 6.8 + 6;
+  if (ey < ye) o += `<rect class="endbg" x="${(X1 - 7 - endW).toFixed(1)}" y="${(ey - 10).toFixed(1)}" width="${endW.toFixed(1)}" height="13" rx="2"/>`;   // über der Linie: lesbar hinterlegen
+  o += `<text class="end" x="${X1 - 4}" y="${ey.toFixed(1)}" text-anchor="end">${esc(endTxt)}</text>`;
+
+  // --- Zylinderwechsel: gestrichelte Linie über beide Grafiken, Beschriftung im Zwischenraum
+  const marks = R.switches.map((m) => ({ t: m.t, txt: t('chartSwitch', { nr: m.to, t: durText(m.t) }), bad: '' }));
+  if (R.emptyAt != null) marks.push({ t: R.emptyAt, txt: t('chartEmpty', { t: durText(R.emptyAt) }), bad: ' bad' });
+  const rowEnd = [-1e9, -1e9];
+  marks.forEach((m) => {
+    const px = x(m.t), w = m.txt.length * 6.1 + 8;
+    const lx = Math.min(Math.max(px - w / 2, X0), X1 - w);
+    const row = lx >= rowEnd[0] + 4 ? 0 : 1;
+    rowEnd[row] = lx + w;
+    const ty = row === 0 ? 109 : 120;
+    o += `<line class="sw${m.bad}" x1="${px.toFixed(1)}" y1="14" x2="${px.toFixed(1)}" y2="${Math.max(y0, 224).toFixed(1)}"/>`;
+    o += `<rect class="swbg" x="${lx.toFixed(1)}" y="${ty - 9}" width="${w.toFixed(1)}" height="12"/><text class="swt${m.bad}" x="${(lx + w / 2).toFixed(1)}" y="${ty}" text-anchor="middle">${esc(m.txt)}</text>`;
+  });
 
   // --- Zeitachse
   const ts = [0.25, 0.5, 1, 2, 3, 4, 6, 12, 24, 48].find((s) => T / s <= 7) || 48;
@@ -512,7 +639,7 @@ function buildPrintSheet() {
     <div class="crop top"></div><div class="crop bottom"></div><div class="crop-label">${esc(t('pCut'))}</div>
     <div class="a5" id="printA5">
       <div class="p-head">
-        <div><div class="p-title">${t('title_html')}</div><div>${esc(t('eyebrow') + t('eyebrowDev'))}</div>
+        <div><div class="p-title">${t('title_html')}</div><div>${esc(t('eyebrow') + t('eyebrowDev'))}</div>${S.title ? `<div class="p-name">${esc(S.title)}</div>` : ''}
           <div class="p-link">${S.id ? esc(showUrl()) : '–'}</div><div class="dim">${esc(t('pPrinted', { dt: dateText(Date.now()) + ' ' + timeText(new Date().toISOString()) }))} · v${APP.version}</div></div>
         <div class="p-brand">${qrSvg(shareUrl())}<img src="img/wicki-logo.png" alt="Wicki Partners Ballonteam"></div>
       </div>
@@ -523,7 +650,9 @@ function buildPrintSheet() {
         <div><div class="k">${esc(t('pRange', { alt: aT(R.maxAlt) }))}</div><div class="v">${R.rangeH != null && R.rangeH > 0 ? durText(R.rangeH) + ' h' : '–'}</div></div>
         <div class="p-status">${ICON.statusOf(R.status)}${esc(statusTitle(R.status))}${neg ? '' : esc(t('pStatusRes', { pct: f0(R.reservePct) }))}</div>
       </div>
+      ${ruleWarns().map((w) => `<div class="p-warn">${esc(w)}</div>`).join('')}
       ${supply}
+      ${R.switches.length || R.emptyAt != null ? `<div class="p-switch">${esc(switchText())}</div>` : ''}
       <div><div class="h">${esc(t(n === 1 ? 'rowsTitle1' : 'rowsTitle', { n }))}</div>
         <table><thead><tr><th class="l">${esc(t('thLevel'))}</th><th>${esc(t('thDurS'))}</th><th>${esc(t('thRateP'))}</th><th>${esc(t('thConsP'))}</th><th>${esc(t('thRest'))}</th><th>${esc(t('thRestPctP'))}</th></tr></thead><tbody>
         ${R.rows.map((r) => `<tr class="${r.type === 'level' ? 'lvl' : 'auto'}"><td class="l">${esc(r.type === 'level' ? aT(r.alt) : `${t(r.type === 'up' ? 'up' : 'down')} – ${r.final ? startText() : aT(r.to)}`)}</td><td>${durText(r.dur)}</td><td>${rateCell(r)}</td><td>${f1(r.cons)}</td><td>${f0(r.rest)}</td><td>${f0(r.restPct)}</td></tr>`).join('')}
@@ -574,7 +703,7 @@ function buildMenu() {
     <button type="button" class="mi" data-act="theme">${esc(t(dark ? 'mThemeLight' : 'mThemeDark'))}</button>
     <button type="button" class="mi" data-act="reload">${esc(t('mReload'))}</button>
     <div class="mh">${esc(t('mMine'))}</div>
-    ${mine.length ? mine.map((m) => `<div class="mine"><button type="button" class="mi" data-act="open" data-id="${esc(m.id)}"><span>${esc(m.id)} · ${m.updated ? dateText(m.updated) + ' ' + timeText(m.updated) : ''}</span></button>
+    ${mine.length ? mine.map((m) => `<div class="mine"><button type="button" class="mi" data-act="open" data-id="${esc(m.id)}"><span>${m.title ? esc(m.title) + ' · ' : ''}${esc(m.id)} · ${m.updated ? dateText(m.updated) + ' ' + timeText(m.updated) : ''}</span></button>
       <button type="button" class="forget" data-act="forget" data-id="${esc(m.id)}" aria-label="${esc(t('mForget', { id: m.id }))}">${ICON.x.replace('<svg ', '<svg width="12" height="12" ')}</button></div>`).join('')
     : `<div class="mi" style="display:flex;align-items:center;min-height:36px;padding:0 14px;color:var(--text-dim)">${esc(t('mNone'))}</div>`}`;
 }
@@ -599,7 +728,7 @@ async function resetCalc() {
 }
 function newCalc() {
   history.pushState(null, '', baseUrl());
-  S = DEFAULTS(); sync.state = 'demo'; hideNotice(); renderAll(); window.scrollTo(0, 0);
+  S = freshState(); sync.state = 'demo'; hideNotice(); renderAll(); window.scrollTo(0, 0);
 }
 
 /* ---------- Ereignisse ---------- */
@@ -691,6 +820,20 @@ function wire() {
     } else if (b.dataset.act === 'del') { S.prof.splice(+b.closest('tr').dataset.i, 1); touch(); renderInputs(); renderResults(); }
   });
 
+  // Titel der Berechnung
+  $('calcTitle').addEventListener('input', (e) => { S.title = e.target.value.slice(0, 60); touch(); });
+  $('calcTitle').addEventListener('change', (e) => { S.title = e.target.value.trim().slice(0, 60); e.target.value = S.title; touch(); });
+
+  // persönliche Konfiguration
+  $('pcLoad').addEventListener('click', pcLoad);
+  $('pcSave').addEventListener('click', pcSave);
+  $('pcForget').addEventListener('click', pcForget);
+  $('pcInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); pcLoad(); } });
+  $('pcInput').addEventListener('input', () => { if (pc.msg) pcSay(null); });
+
+  // übernommener Verlauf: Steigen und Sinken wieder ergänzen
+  $('bodyProf').addEventListener('click', (e) => { if (e.target.id === 'transOn') { S.set.trans = true; touch(); } });
+
   // Kopfzeile, Link-Zeile, Fusszeile
   $('copyBtn').addEventListener('click', (e) => copyLink(e.currentTarget));
   $('shareBtn').addEventListener('click', async () => {
@@ -756,6 +899,7 @@ function wire() {
   wire();
   renderAll();
   loadFromHash();
+  pcRefresh();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   window.O2 = { state: () => S, result: () => R, preparePrint };       // für Tests und Fehlersuche
 }());

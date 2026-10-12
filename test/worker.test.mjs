@@ -84,3 +84,59 @@ test('Worker-Version: wrangler.toml und worker/package.json gleich', () => {
   const v = JSON.parse(readFileSync(new URL('../worker/package.json', import.meta.url), 'utf8')).version;
   assert.match(readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8'), new RegExp(`APP_VERSION = "${v.replace(/\./g, '\\.')}"`));
 });
+
+/* ---------- 0.2.0: Titel, Profil ohne Übergänge, persönliche Konfiguration ---------- */
+import { cleanProfile } from '../worker/src/index.js';
+
+test('Titel und «ohne Übergänge» werden gespeichert', async () => {
+  const e = env();
+  const c = calc(); c.title = 'Alpenfahrt 17.10. ' + 'x'.repeat(80); c.set.trans = false;
+  assert.equal((await call(e, 'PUT', '/c/ABCDEF', { data: c })).status, 200);
+  const g = await (await call(e, 'GET', '/c/ABCDEF')).json();
+  assert.equal(g.data.title.length, 60);
+  assert.equal(g.data.set.trans, false);
+  const old = calc();                                                // Stand ohne die neuen Felder (0.1.x)
+  assert.equal((await call(e, 'PUT', '/c/ABCDEG', { data: old })).status, 200);
+  const g2 = await (await call(e, 'GET', '/c/ABCDEG')).json();
+  assert.equal(g2.data.title, ''); assert.equal(g2.data.set.trans, true);
+});
+
+test('Persönlicher Kurzcode: einmalig vergeben, laden, überschreiben', async () => {
+  const e = env();
+  const cfg = () => { const c = calc(); return { units: c.units, cyl: c.cyl, set: { ...c.set, factor: 1.3 }, prof: c.prof, title: 'x' }; };
+  assert.equal((await call(e, 'GET', '/p/bwi')).status, 404);
+  const r1 = await call(e, 'PUT', '/p/BWI', { data: cfg(), create: true });
+  assert.equal(r1.status, 200);
+  assert.equal((await r1.json()).created, true);
+  assert.equal(e.CALCS.opts.expirationTtl, 730 * 86400);
+  assert.equal((await call(e, 'PUT', '/p/bwi', { data: cfg(), create: true })).status, 409, 'vergeben');
+  const g = await (await call(e, 'GET', '/p/Bwi')).json();
+  assert.equal(g.data.cyl.length, 2);
+  assert.equal(g.data.set.factor, 1, 'Verbrauchsfaktor gehört nicht zur Konfiguration');
+  assert.equal(g.data.prof, undefined, 'kein Fahrtprofil');
+  assert.equal(g.data.title, undefined);
+  const c2 = cfg(); c2.cyl.push({ nr: '3', size: 3, p: 300 });
+  assert.equal((await call(e, 'PUT', '/p/bwi', { data: c2 })).status, 200, 'eigene Konfiguration überschreiben');
+  assert.equal((await (await call(e, 'GET', '/p/bwi')).json()).data.cyl.length, 3);
+});
+
+test('Persönlicher Kurzcode: Form und Daten', async () => {
+  const e = env();
+  const c = calc();
+  for (const bad of ['ab', 'a-b', 'äöü', 'x'.repeat(21)]) assert.equal((await call(e, 'PUT', '/p/' + encodeURIComponent(bad), { data: c, create: true })).status >= 400, true, bad);
+  assert.equal((await call(e, 'PUT', '/p/abc', { data: { cyl: [] }, create: true })).status, 422);
+  assert.equal(cleanProfile(null), null);
+  assert.equal(e.CALCS.m.size, 0);
+});
+
+test('Persönlicher Kurzcode: Laden verlängert die Aufbewahrung nach 30 Tagen', async () => {
+  const e = env(), c = calc();
+  await call(e, 'PUT', '/p/abc', { data: c, create: true });
+  const rec = JSON.parse(e.CALCS.m.get('p:abc')); rec.seen = new Date(Date.now() - 40 * 86400000).toISOString();
+  e.CALCS.m.set('p:abc', JSON.stringify(rec)); e.CALCS.opts = null;
+  await call(e, 'GET', '/p/abc');
+  assert.ok(e.CALCS.opts, 'neu geschrieben');
+  e.CALCS.opts = null;
+  await call(e, 'GET', '/p/abc');
+  assert.equal(e.CALCS.opts, null, 'kein Schreiben bei jedem Laden');
+});

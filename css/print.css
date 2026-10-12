@@ -15,6 +15,9 @@
 .print-sheet .p-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid #111111; }
 .print-sheet .p-title { font-family: 'Inter', system-ui, sans-serif; font-size: 1.67em; font-weight: 600; line-height: 1.2; }
 .print-sheet .p-link { margin-top: 6px; font-weight: 600; word-break: break-all; }
+.print-sheet .p-name { margin-top: 4px; font-family: 'Inter', system-ui, sans-serif; font-size: 1.15em; font-weight: 600; }
+.print-sheet .p-switch { margin-top: -2px; }
+.print-sheet .p-warn { border: 1px solid #111111; padding: 2px 6px; font-weight: 600; }
 .print-sheet .dim { color: #555555; }
 .print-sheet .p-brand { display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; }
 .print-sheet .p-brand svg { width: 62px; height: 62px; display: block; }

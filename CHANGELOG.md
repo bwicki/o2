@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.2.0 — 2026-10-12
+
+- **Persönlicher Kurzcode («Meine Konfiguration»):** Vorrat (1) und Einstellungen (2) lassen sich unter einem selbst gewählten Kurzcode (3–20 Buchstaben oder Ziffern, ohne Kennwort) speichern und auf jedem Gerät wieder laden. Ein Kurzcode wird nur einmal vergeben: Speichern unter einem vergebenen Kurzcode geht erst, nachdem man ihn auf dem Gerät geladen hat. Das Gerät merkt sich den Kurzcode; neue Berechnungen beginnen dann mit der eigenen Konfiguration. Aufbewahrung 2 Jahre ab der letzten Nutzung.
+- **Zylinderwechsel-Plan:** Alle Personen atmen aus demselben Zylinder, geleert wird in der erfassten Reihenfolge. Der Verlauf zeigt jeden Wechsel als gestrichelte Linie mit dem Zeitpunkt, darunter steht der Plan als Zeile (auch im Druck); «Vorrat leer nach …», wenn es nicht reicht.
+- **Titel der Fahrt (fakultativ):** erscheint im Fenstertitel, im Druck und in der Liste «Meine Berechnungen».
+- **Übernahme aus dem Fahrtbriefing:** Ein Link `#i.…` übergibt ein Fahrtprofil (Höhenstufen in ft, Dauer in h, Titel). Übernommene Verläufe enthalten Steigen und Sinken bereits; die App ergänzt dann keine Übergänge (umschaltbar).
+- **Sauerstoffregel:** Meldung, wenn das Profil Zeit ohne Sauerstoff über 13 000 ft oder mehr als 30 Minuten zwischen 10 000 und 13 000 ft enthält (Beginnhöhe über diesen Grenzen).
+- Speicher-Server 0.2.0: Endpunkt `/p/<kurzcode>`, Titel und Kennzeichen «ohne Übergänge» in der Berechnung.
+
 ## 0.1.2 — 2026-10-12
 
 - Favicon und App-Symbole: Variante 4 (O₂-Ring in vier Farben mit tiefgestellter 2) im Stil von GaforCast und Fahrtbriefing; zusätzlich `favicon.ico`.

@@ -69,6 +69,11 @@ export const EDS_MASK = [[20000, 63.16], [25000, 96.92]];                      /
 export const MASK_ABOVE_FT = 18000;    // über FL180 verlangt der Hersteller Maske und F-Modus
 export const MIN_RATE = 8;             // L/h: Untergrenze unter 10 000 ft (Annahme, keine Herstellerangabe)
 
+// Sauerstoffregel der Betriebsvorschriften: über 13 000 ft immer, zwischen 10 000 und 13 000 ft nach 30 Minuten.
+export const RULE_ALWAYS_FT = 13000;
+export const RULE_BAND_FT = 10000;
+export const RULE_BAND_LIMIT_H = 0.5;
+
 function lin(nodes, h) {
   let a = nodes[0], b = nodes[1];
   if (h >= nodes[nodes.length - 1][0]) { a = nodes[nodes.length - 2]; b = nodes[nodes.length - 1]; }
@@ -88,8 +93,10 @@ export function rateLph(altFt, startFt = 0) {
 const num = (v, d = 0) => (Number.isFinite(+v) ? +v : d);
 
 /**
- * input: { cylinders:[{nr,size,p}], persons, sfPct, startM, restBar, climb, sink, factor, tempC, levels:[{alt (ft), dur (h)}] }
+ * input: { cylinders:[{nr,size,p}], persons, sfPct, startM, restBar, climb, sink, factor, tempC, trans, levels:[{alt (ft), dur (h)}] }
  * Drücke in bar Überdruck, Grössen in Liter Wasservolumen.
+ * trans === false: Die Höhenstufen sind bereits ein vollständiger Verlauf (z. B. aus dem Fahrtbriefing);
+ * Steigen, Sinken und der Abstieg am Schluss werden dann nicht ergänzt.
  */
 export function compute(input) {
   const persons = Math.max(0, num(input.persons, 1));
@@ -101,6 +108,7 @@ export function compute(input) {
   const factor = Math.max(0, num(input.factor, 1)) || 1;
   const tC = num(input.tempC, 15);
   const mult = persons * factor;
+  const autoTrans = input.trans !== false;
 
   const cyl = (input.cylinders || []).map((c) => {
     const size = Math.max(0, num(c.size)), p = Math.max(0, num(c.p));
@@ -112,6 +120,11 @@ export function compute(input) {
   const levels = (input.levels || []).map((l) => ({ alt: Math.max(0, num(l.alt)), dur: Math.max(0, num(l.dur)) }));
   const rows = [];
   let cum = 0, durTotal = 0, durO2 = 0, mask = false, extrapLow = false, extrapHigh = false;
+  let above13 = 0, band10 = 0;                                       // Zeit ohne Sauerstoff in den Bereichen der Sauerstoffregel
+  const noO2 = (alt, h) => {
+    if (alt >= startFt) return;
+    if (alt > RULE_ALWAYS_FT) above13 += h; else if (alt > RULE_BAND_FT) band10 += h;
+  };
   const flag = (alt) => {
     if (alt < startFt) return;
     if (alt > MASK_ABOVE_FT) mask = true;
@@ -126,31 +139,57 @@ export function compute(input) {
   const transition = (from, to, final) => {
     const dur = Math.abs(to - from) / FT_PER_M / (to > from ? climb : sink) / 3600;
     const N = 400; let lph = 0, o2 = 0;
-    for (let i = 0; i < N; i++) { const h = from + (to - from) * (i + 0.5) / N; const r = rateLph(h, startFt); lph += r; if (r > 0) o2++; flag(h); }
+    for (let i = 0; i < N; i++) { const h = from + (to - from) * (i + 0.5) / N; const r = rateLph(h, startFt); lph += r; if (r > 0) o2++; flag(h); noO2(h, dur / N); }
     lph /= N;
     durO2 += dur * o2 / N;
     push({ type: to > from ? 'up' : 'down', from, to, final: !!final, dur, rate: lph, cons: lph * dur * mult });
   };
   levels.forEach((l, i) => {
-    if (i > 0 && levels[i - 1].alt !== l.alt) transition(levels[i - 1].alt, l.alt, false);
+    if (autoTrans && i > 0 && levels[i - 1].alt !== l.alt) transition(levels[i - 1].alt, l.alt, false);
     const r = rateLph(l.alt, startFt);
     flag(l.alt);
+    noO2(l.alt, l.dur);
     if (r > 0) durO2 += l.dur;
     push({ type: 'level', index: i, alt: l.alt, dur: l.dur, rate: r, cons: r * l.dur * mult });
   });
-  if (levels.length && levels[levels.length - 1].alt > startFt) transition(levels[levels.length - 1].alt, startFt, true);
+  if (autoTrans && levels.length && levels[levels.length - 1].alt > startFt) transition(levels[levels.length - 1].alt, startFt, true);
 
   const cons = cum, add = cons * sf, need = cons + add;
   const reserve = usable - need;
   const maxAlt = levels.reduce((m, l) => Math.max(m, l.alt), 0);
   const maxRate = rateLph(maxAlt, startFt) * mult;
   const status = cons <= 0 && usable <= 0 ? 'none' : usable >= need ? 'ok' : usable >= cons ? 'tight' : 'short';
+
+  // Zylinderwechsel: alle Personen atmen aus demselben Zylinder, die Zylinder werden in der erfassten Reihenfolge geleert.
+  const timeAtCum = (target) => {                                    // Zeit (h ab Profilbeginn), zu der der Verbrauch «target» erreicht
+    let t = 0, c = 0;
+    for (const r of rows) {
+      if (r.cons > 0 && c + r.cons >= target - 1e-9) return t + r.dur * Math.min(1, Math.max(0, (target - c) / r.cons));
+      t += r.dur; c += r.cons;
+    }
+    return null;
+  };
+  const inUse = cyl.filter((c) => c.usable > 0);
+  const switches = [], cylPlan = [];
+  let acc = 0, t0 = 0, emptyAt = null;
+  inUse.forEach((c, k) => {
+    acc += c.usable;
+    const tEnd = cons > acc + 1e-9 ? timeAtCum(acc) : null;           // null: reicht über das Profil hinaus
+    const used = Math.min(c.usable, Math.max(0, cons - (acc - c.usable)));
+    cylPlan.push({ nr: c.nr, from: used > 0 || k === 0 ? t0 : null, to: tEnd, used, left: c.usable - used });
+    if (tEnd != null) {
+      if (k < inUse.length - 1) switches.push({ from: c.nr, to: inUse[k + 1].nr, t: tEnd }); else emptyAt = tEnd;
+      t0 = tEnd;
+    }
+  });
   return {
     cyl, content, usable, rows, cons, add, need, reserve,
     reservePct: usable > 0 ? reserve / usable * 100 : 0,
     endRest: usable - cons, endRestPct: usable > 0 ? (usable - cons) / usable * 100 : 0,
     maxAlt, rangeH: maxRate > 0 ? reserve / maxRate : null,
     status, durTotal, durO2, startFt, persons, sfPct: sf * 100, factor,
+    switches, cylPlan, emptyAt, autoTrans,
+    rule: { above13H: above13, band10H: band10, limitH: RULE_BAND_LIMIT_H, violated: above13 > 1e-6 || band10 > RULE_BAND_LIMIT_H + 1e-6 },
     warn: { mask, extrapLow, extrapHigh, low: cyl.filter((c) => c.low).map((c) => c.nr), noLevels: levels.length === 0 },
   };
 }

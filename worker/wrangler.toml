@@ -8,7 +8,7 @@ workers_dev = true
 
 [vars]
 ALLOWED_ORIGINS = "https://o2.wicki.aero,https://bwicki.github.io,http://localhost:8080,http://127.0.0.1:8080"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 KEEP_DAYS = "183"
 
 [[kv_namespaces]]
