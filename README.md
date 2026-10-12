@@ -1,194 +1,197 @@
-# EDS O2-Planung
+# EDS O2 Planning
 
-Sauerstoffplanung für Fahrten mit dem Mountain High **EDS O2D2-2G**: Reicht der
-Vorrat für das geplante Fahrtprofil, wie gross ist die Reserve, und wie lange
-reicht sie auf der höchsten Höhenstufe?
+Oxygen planning for flights with the Mountain High **EDS O2D2-2G**: does the
+supply last for the planned flight profile, how large is the reserve, and how
+long does it last at the highest altitude level?
 
-**https://o2.wicki.aero** · Deutsch und Englisch · offen, ohne Anmeldung
+**https://o2.wicki.aero** · German and English · open, no login
 
-Planungshilfe. Massgebend bleiben die Druckanzeige im Flug und die Unterlagen
-des Herstellers. Die Verbrauchswerte stammen von Mountain High, nicht vom Autor
-dieser App (siehe [Datengrundlage](#datengrundlage) und [LICENSE](LICENSE)).
+The app is called "EDS O2-Planung" in German. It is a planning aid. The
+pressure gauge in flight and the manufacturer's documentation prevail. The
+consumption figures come from Mountain High, not from the author of this app
+(see [Data source](#data-source) and [LICENSE](LICENSE)).
 
-## Bedienung
+## How to use it
 
-1. **Sauerstoffvorrat** — je Zylinder Nummer, Grösse in Litern und Druck (bar oder psi).
-2. **Einstellungen** — Personen, Sicherheitszuschlag, Höhe, ab der Sauerstoff
-   genommen wird (Meter oder Fuss), Restdruck, Steigen und Sinken.
-3. **Fahrtprofil** — Höhenstufen (ft/FL oder m) mit Dauer. Steigen und Sinken
-   zwischen den Stufen ergänzt die App selbst.
-4. **Resultat** — Bilanz (Vorrat, Bedarf, Reserve, Reichweite), Verlauf von Höhe
-   und Restvorrat mit den Zylinderwechseln, Verbrauch je Höhenstufe.
+1. **Oxygen supply** — per cylinder: number, size in litres and pressure (bar or psi).
+2. **Settings** — persons, safety margin, altitude from which oxygen is used
+   (metres or feet), residual pressure, climb and descent rates.
+3. **Flight profile** — altitude levels (ft/FL or m) with their duration. The
+   app adds climb and descent between the levels itself.
+4. **Result** — balance (supply, demand, reserve, endurance), chart of altitude
+   and remaining supply with the cylinder changes, consumption per level.
 
-Eingaben: Höhe als `FL120`, `120` oder `12000`; unter 5000 ft in Fuss. Dauer als
-`2:30` oder `2.5`. Beginnhöhe als Zahl in Metern; `9000 ft` oder `FL090` stellt
-auf Fuss um.
+Input formats: altitude as `FL120`, `120` or `12000`; below 5000 ft in feet.
+Duration as `2:30` or `2.5`. Start altitude as a number in metres; `9000 ft` or
+`FL090` switches it to feet.
 
-Weitere Funktionen:
+Further functions:
 
-- **Titel der Fahrt** (fakultativ) — erscheint im Fenstertitel, im Druck und
-  in der Liste «Meine Berechnungen» im Menü.
-- **Zylinderwechsel-Plan** — alle Personen atmen aus demselben Zylinder; die
-  Zylinder werden in der erfassten Reihenfolge geleert. Jeder Wechsel steht als
-  gestrichelte Linie mit Zeitpunkt im Verlauf und als Zeile darunter.
-- **Sauerstoffregel** — Meldung nach AMC1 BOP.BAS.180 (Part-BOP), wenn das
-  Profil ohne Sauerstoff über 13 000 ft Druckhöhe führt oder länger als 30
-  Minuten zwischen 10 000 und 13 000 ft bleibt (nur möglich, wenn die
-  Beginnhöhe über diesen Grenzen liegt). Nach BOP.BAS.180 beurteilt der
-  Kommandant, ab wann Sauerstoff nötig ist; die Grenzen des AMC gelten, wenn
-  er das nicht kann. Die App unterscheidet nicht zwischen Besatzung und
-  Passagieren.
-- **Stand nachführen** — im Flug die Dauer auf der aktuellen Höhenstufe und den
-  abgelesenen Druck eingeben. Die App vergleicht mit dem Plan, bildet daraus
-  einen Verbrauchsfaktor und rechnet den Rest der Fahrt neu.
-- **Drucken** — A5 auf der linken Hälfte eines A4 quer, mit Schnittzeichen,
-  immer eine Seite (geprüft bis 6 Zylinder und 12 Höhenstufen).
-- **Zurücksetzen** — setzt die Berechnung auf die Beispielwerte zurück; der
-  Kurzcode bleibt.
-- Helle und dunkle Darstellung, als App installierbar, ohne Netz nutzbar.
+- **Flight title** (optional) — shown in the window title, on the printout and
+  in the list "My calculations" in the menu.
+- **Cylinder change plan** — all persons breathe from the same cylinder; the
+  cylinders are emptied in the order entered. Each change appears as a dashed
+  line with its time in the chart and as a line of text below it.
+- **Oxygen rule** — a warning based on AMC1 BOP.BAS.180 (Part-BOP) if the
+  profile goes above 13,000 ft pressure altitude without oxygen, or stays
+  between 10,000 and 13,000 ft for more than 30 minutes without oxygen (only
+  possible if the start altitude is set above these limits). Under BOP.BAS.180
+  the pilot-in-command determines when oxygen is needed; the AMC limits apply
+  where he or she cannot. The app does not distinguish between crew and
+  passengers.
+- **Update status** — in flight, enter the time spent at the current level and
+  the pressures read off the gauges. The app compares them with the plan,
+  derives a consumption factor and recalculates the rest of the flight.
+- **Print** — A5 on the left half of an A4 landscape sheet, with crop marks,
+  always one page (checked up to 6 cylinders and 12 levels).
+- **Reset** — resets the calculation to the example values; the short code is
+  kept.
+- Light and dark theme, installable as an app, usable offline.
 
-## «Meine Berechnung» und Kurzcode
+## "My calculation" and its short code
 
-Die Startadresse ohne Code zeigt immer die Beispielwerte. Mit der ersten
-Änderung entsteht eine eigene Berechnung mit einem sechsstelligen Kurzcode in
-der Adresse, zum Beispiel `o2.wicki.aero/#ABC234`. Diese Adresse (oder der
-QR-Code daneben) führt jederzeit dorthin zurück, auch wenn in der Zwischenzeit
-andere die App benutzt haben.
+The start address without a code always shows the example values. The first
+change creates a calculation of its own with a six-character short code in the
+address, for example `o2.wicki.aero/#ABC234`. This address (or the QR code
+next to it) always leads back to it, even if others have used the app in the
+meantime.
 
-- Wer die Adresse kennt, kann die Berechnung öffnen **und ändern**. Es gibt
-  kein Kennwort.
-- Der Stand liegt auf dem Gerät und auf dem Speicher-Server. Jede Änderung
-  verlängert die Aufbewahrung um 183 Tage (rund 6 Monate); danach wird der
-  Eintrag gelöscht.
-- Gespeichert werden nur Rechenwerte (Zylinder, Einstellungen, Höhenstufen,
-  Nachführ-Einträge) und der frei gewählte Titel.
-- Ist der Server nicht erreichbar, arbeitet die App auf dem Gerät weiter
-  («nur auf diesem Gerät»), und der kopierte Link trägt den Stand als Anhang mit.
+- Anyone who knows the address can open **and change** the calculation. There
+  is no password.
+- The state is kept on the device and on the storage server. Every change
+  extends the retention by 183 days (about 6 months); after that the entry is
+  deleted.
+- Only calculation values are stored (cylinders, settings, levels, status
+  updates) plus the freely chosen title.
+- If the server cannot be reached, the app keeps working on the device ("saved
+  on this device only"), and the copied link carries the state as an
+  attachment.
 
-## «Meine Konfiguration»: persönlicher Kurzcode
+## "My configuration": personal short code
 
-Vorrat (1) und Einstellungen (2) lassen sich unter einem selbst gewählten
-Kurzcode ablegen, zum Beispiel `bwi`: 3 bis 20 Buchstaben oder Ziffern, ohne
-Kennwort.
+Supply (1) and settings (2) can be stored under a short code of your own
+choice, for example `bwi`: 3 to 20 letters or digits, no password.
 
-- **Speichern** legt den Kurzcode an. Jeder Kurzcode wird nur einmal vergeben.
-- **Laden** holt die Konfiguration auf jedes Gerät. Das Gerät merkt sich den
-  Kurzcode; neue Berechnungen beginnen dort mit der eigenen Konfiguration
-  statt mit den Beispielwerten für 1 und 2.
-- Ändern: laden, anpassen, speichern. Unter einem vergebenen Kurzcode lässt
-  sich erst speichern, nachdem er auf dem Gerät geladen wurde. Das schützt vor
-  versehentlichem Überschreiben, nicht vor Absicht: Wer den Kurzcode kennt,
-  kann die Konfiguration laden und ändern.
-- Weichen die Eingaben in 1 oder 2 von der gespeicherten Konfiguration ab,
-  erscheint der Knopf **«Konfiguration … aktualisieren?»**. Er speichert den
-  Stand unter demselben Kurzcode.
-- Zur Konfiguration gehört auch der Verbrauchsfaktor aus dem Nachführen. Nicht
-  dazu gehören Fahrtprofil und Titel.
-- Aufbewahrung: 2 Jahre ab dem letzten Speichern oder Laden.
+- **Save** creates the short code. Each short code is assigned only once.
+- **Load** fetches the configuration on any device. The device remembers the
+  short code; new calculations then start with your own configuration instead
+  of the example values for 1 and 2.
+- To change it: load, adjust, save. Saving under a short code that is already
+  taken is only possible after it has been loaded on that device. This
+  protects against overwriting by accident, not on purpose: anyone who knows
+  the short code can load and change the configuration.
+- If the entries in 1 or 2 differ from the stored configuration, the button
+  **"Update configuration …?"** appears. It saves the current state under the
+  same short code.
+- The consumption factor from the status update is part of the configuration.
+  The flight profile and the title are not.
+- Retention: 2 years from the last save or load.
 
-## Übernahme aus dem Fahrtbriefing
+## Hand-over from the Fahrtbriefing app
 
-Im [Fahrtbriefing](https://briefing.wicki.aero) (Gasfahrt, Panel
-«Fahrtprofil») öffnet der Knopf «O₂-Planung» diese App mit dem Höhenprofil
-der Fahrt. Übergeben werden Höhenstufen in ft (Druckhöhe) mit Dauer und ein
-Titel, als Anhang der Adresse: `o2.wicki.aero/#i.<Anhang>`. Die App legt daraus
-eine neue Berechnung an; Vorrat und Einstellungen kommen aus der eigenen
-Konfiguration oder den Beispielwerten.
+In the [Fahrtbriefing](https://briefing.wicki.aero) flight-briefing app (gas
+balloon flights, panel "Flight profile"), the button "O₂ planning" opens this
+app with the altitude profile of the flight. It hands over altitude levels in
+ft (pressure altitude) with their duration and a title, as an attachment to the
+address: `o2.wicki.aero/#i.<attachment>`. The app creates a new calculation
+from it; supply and settings come from your own configuration or from the
+example values.
 
-Ein übernommener Verlauf enthält Steigen und Sinken bereits als Teilstufen.
-Die App ergänzt dann keine eigenen Übergänge und keinen Abstieg am Schluss
-(im Abschnitt Fahrtprofil umschaltbar).
+A profile handed over this way already contains climb and descent as partial
+steps. The app then adds no transitions of its own and no final descent (this
+can be switched back in the flight-profile section).
 
-Das Fahrtbriefing vergibt den Kurzcode der Berechnung und merkt ihn sich. Es
-zeigt danach «O₂-Planung öffnen» (die Berechnung unverändert) und «Profil neu
-übergeben»: Das ersetzt Fahrtprofil und Titel der bestehenden Berechnung,
-Vorrat und Einstellungen bleiben.
+The briefing app assigns the short code of the calculation and remembers it.
+It then shows "Open O₂ planning" (opens the calculation unchanged) and "Send
+profile again": this replaces the flight profile and the title of the existing
+calculation, while supply and settings are kept.
 
-Format des Anhangs: base64url von
-`{"v":1,"t":"Titel","l":[[Höhe ft, Dauer h],…],"s":1,"c":"ABC234"}`; `s: 1`
-heisst «Verlauf ohne zu ergänzende Übergänge», `c` ist der Kurzcode der
-Berechnung (fakultativ). Höchstens 30 Höhenstufen.
+Format of the attachment: base64url of
+`{"v":1,"t":"title","l":[[altitude ft, duration h],…],"s":1,"c":"ABC234"}`;
+`s: 1` means "profile without transitions to be added", `c` is the short code
+of the calculation (optional). At most 30 levels.
 
-## Datengrundlage
+## Data source
 
-Die Verbrauchswerte sind der vom Hersteller veröffentlichten
+The consumption figures are taken from the
 [Cylinder Duration Chart](https://www.mhoxygen.com/2016/wp-content/uploads/Cylinder-Duration-Chart-6-2014Rev8md.pdf)
-(Revision 06/2017) der **Mountain High Equipment & Supply Company** entnommen.
-Die Rechte an dieser Tabelle liegen bei Mountain High. Es besteht keine
-Verbindung zum Hersteller; er hat diese App weder geprüft noch freigegeben.
+(revision 06/2017) published by **Mountain High Equipment & Supply Company**.
+All rights in that chart remain with Mountain High. There is no affiliation
+with the manufacturer; it has neither reviewed nor approved this app.
 
-Aus der Tabelle (Inhalt ÷ Dauer, je Person, Spalten «EDS»):
+From the chart (content ÷ duration, per person, "EDS" columns):
 
-| Höhe | Abgabe | L/h je Person |
+| Altitude | Delivery | L/h per person |
 |---|---|---|
-| 10 000 ft | Kanüle (Modi N, D5, D10) | 16.3 |
-| 15 000 ft | Kanüle | 33.7 |
-| 18 000 ft | Kanüle | 43.3 |
-| 20 000 ft | Maske (F-Modus) | 63.2 |
-| 25 000 ft | Maske | 96.9 |
+| 10,000 ft | Cannula (modes N, D5, D10) | 16.3 |
+| 15,000 ft | Cannula | 33.7 |
+| 18,000 ft | Cannula | 43.3 |
+| 20,000 ft | Mask (F mode) | 63.2 |
+| 25,000 ft | Mask | 96.9 |
 
-## Rechenmodell
+## Calculation model
 
-Eigene Ableitungen und Annahmen (nicht vom Hersteller):
+Own derivations and assumptions (not from the manufacturer):
 
-- Zwischen den Stützpunkten linear; über FL180 gilt die Maskenkurve.
-- Unter 10 000 ft linear weitergeführt, mindestens 8 L/h; über 25 000 ft
-  weitergeführt, mit Warnung.
-- Unter der eingestellten Beginnhöhe (Vorgabe 2800 m) kein Verbrauch.
-- Steigen 1.5 m/s und Sinken 2.0 m/s (einstellbar); der Verbrauch im Übergang
-  ist über die Höhe gemittelt.
-- **Zylinderinhalt** mit dem Realgasfaktor von Sauerstoff bei 15 °C, bezogen auf
-  1.013 bar und 21 °C. Nutzbar ist der Inhalt bis zum Restdruck (Vorgabe 15 bar).
-- **Zylinderwechsel**: Zeitpunkt, zu dem der Verbrauch (ohne Zuschlag) den
-  nutzbaren Inhalt der bisherigen Zylinder erreicht.
-- **Bedarf** = Verbrauch × Personen × (1 + Sicherheitszuschlag).
-  **Reichweite** = Reserve ÷ Verbrauch auf der höchsten Höhenstufe.
-- Status: «genügend», wenn der Vorrat auch den Zuschlag deckt; «knapp», wenn er
-  nur den Verbrauch deckt; «ungenügend» darunter.
+- Linear between the reference points; above FL180 the mask curve applies.
+- Continued linearly below 10,000 ft, at least 8 L/h; continued above
+  25,000 ft, with a warning.
+- No consumption below the start altitude (default 2800 m).
+- Climb at 1.5 m/s and descent at 2.0 m/s (adjustable); consumption during a
+  transition is averaged over the altitude.
+- **Cylinder content** with the real-gas factor of oxygen at 15 °C, referred
+  to 1.013 bar and 21 °C. Usable is the content down to the residual pressure
+  (default 15 bar).
+- **Cylinder change**: the time at which the consumption (without margin)
+  reaches the usable content of the cylinders used so far.
+- **Demand** = consumption × persons × (1 + safety margin).
+  **Endurance** = reserve ÷ consumption at the highest level.
+- Status: "sufficient" if the supply also covers the margin; "marginal" if it
+  covers only the consumption; "insufficient" below that.
 
-Nicht bekannt ist, mit welcher F-Stufe (F1–F4) die Maskenwerte der Tabelle
-gerechnet sind; die Werte über FL180 sind deshalb als Näherung zu lesen.
+It is not known which F setting (F1–F4) the mask figures of the chart are
+based on; the values above FL180 should therefore be read as an approximation.
 
-Code: `js/model.js`. Die Tests geben die Herstellertabelle auf 2 % genau wieder.
+Code: `js/model.js`. The tests reproduce the manufacturer's chart to within 2 %.
 
-## Aufbau
+## Structure
 
-| Teil | Ort |
+| Part | Location |
 |---|---|
-| App (statisch, GitHub Pages, Domain über `CNAME`) | `index.html`, `css/`, `js/`, `fonts/`, `icons/`, `img/` |
-| Rechenmodell, Einheiten | `js/model.js`, `js/units.js` |
-| Oberfläche, Texte DE/EN, Speicherung | `js/app.js`, `js/i18n.js`, `js/store.js` |
-| Version, Adresse des Speicher-Servers | `js/version.js`, `js/config.js` |
-| Offline-Betrieb | `sw.js`, `manifest.webmanifest` |
-| Speicher-Server (Cloudflare Worker + KV) | `worker/` |
+| App (static, GitHub Pages, domain via `CNAME`) | `index.html`, `css/`, `js/`, `fonts/`, `icons/`, `img/` |
+| Calculation model, units | `js/model.js`, `js/units.js` |
+| Interface, texts DE/EN, storage | `js/app.js`, `js/i18n.js`, `js/store.js` |
+| Version, address of the storage server | `js/version.js`, `js/config.js` |
+| Offline use | `sw.js`, `manifest.webmanifest` |
+| Storage server (Cloudflare Worker + KV) | `worker/` |
 | Tests | `test/` |
 
-Der Speicher-Server läuft unter `https://o2-api.balthasar.workers.dev`
-(Prüfung: `/health`). Deployt wird er über den Workflow «O2 worker» im
-Repository [`bwicki/briefing`](https://github.com/bwicki/briefing), weil die
-Cloudflare-Zugangsdaten dort bereits hinterlegt sind. Einrichtung Schritt für
-Schritt: [SETUP.md](SETUP.md). Änderungen: [CHANGELOG.md](CHANGELOG.md).
+The storage server runs at `https://o2-api.balthasar.workers.dev` (check:
+`/health`). It is deployed through the workflow "O2 worker" in the repository
+[`bwicki/briefing`](https://github.com/bwicki/briefing), because the Cloudflare
+credentials are already stored there. Step-by-step setup (in German):
+[SETUP.md](SETUP.md). Changes (in German): [CHANGELOG.md](CHANGELOG.md).
 
 ## Tests
 
-- `npm test` — Rechenmodell und Speicher-Server (läuft bei jedem Push auch als
-  GitHub-Workflow «Tests»).
-- `python3 test/ui.smoke.py http://localhost:8080/ <Ordner>` — Oberfläche auf
-  Desktop und Handy, Druck (benötigt Playwright; vorher `npm run serve`).
-- `python3 test/ui.server.py` — zwei Geräte und der persönliche Kurzcode gegen
-  einen lokalen Ersatz-Server (`node test/dev-api.mjs`).
+- `npm test` — calculation model, storage and storage server (also runs on
+  every push as the GitHub workflow "Tests").
+- `python3 test/ui.smoke.py http://localhost:8080/ <folder>` — interface on
+  desktop and phone, printing (needs Playwright; run `npm run serve` first).
+- `python3 test/ui.server.py` — two devices and the personal short code
+  against a local stand-in server (`node test/dev-api.mjs`).
 
-## Neue Version
+## Releasing a new version
 
-Die Nummer der App steht in `js/version.js`, `sw.js`, `package.json` und
-`CHANGELOG.md` und muss überall gleich sein (ein Test prüft das). Der
-Speicher-Server zählt eigenständig (`worker/package.json`,
-`worker/wrangler.toml`); nach Änderungen unter `worker/` den Workflow «O2
-worker» erneut starten.
+The app's version number is in `js/version.js`, `sw.js`, `package.json` and
+`CHANGELOG.md` and must be the same everywhere (a test checks this). The
+storage server has its own version (`worker/package.json`,
+`worker/wrangler.toml`); after changes under `worker/`, run the workflow "O2
+worker" again.
 
-## Lizenz
+## Licence
 
-© 2026 Balthasar Wicki, Wicki Aero GmbH. Quelltext zur Einsicht, alle Rechte
-vorbehalten — siehe [LICENSE](LICENSE). Die Grundlagendaten stammen von
-Mountain High und sind von der Lizenz ausgenommen (Ziffer 4). Mitgeliefert:
-Schriften IBM Plex Mono und Inter (SIL OFL 1.1), qrcode-generator (MIT).
+© 2026 Balthasar Wicki, Wicki Aero GmbH. Source code published for inspection,
+all rights reserved — see [LICENSE](LICENSE). The underlying data originate
+from Mountain High and are excluded from the licence (clause 4). Bundled:
+fonts IBM Plex Mono and Inter (SIL OFL 1.1), qrcode-generator (MIT).
