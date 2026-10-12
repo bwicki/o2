@@ -4,5 +4,5 @@
  * Die Adresse zeigt der Workflow «O2 worker» im Repository bwicki/briefing nach dem Deploy (siehe SETUP.md).
  */
 window.O2_CONFIG = {
-  apiBase: '',
+  apiBase: 'https://o2-api.balthasar.workers.dev',
 };
