@@ -396,6 +396,7 @@ function renderLink() {
   st.innerHTML = `${icon}<span class="txt">${esc(txt)}</span>`;
   st.title = txt;
   $('qrBtn').innerHTML = qrSvg(shareUrl());
+  printStale = true; schedulePrint();                                // Druckblatt im Hintergrund nachführen (Stand, Link, QR-Code)
 }
 
 function renderAll() {
@@ -646,7 +647,20 @@ function showTrack() {
 }
 
 /* ---------- Druck: A5 links auf A4 quer ---------- */
+// Das Logo wird beim Start als Daten-URL geladen, und das Druckblatt wird nach jeder Änderung im Hintergrund neu gebaut.
+// So ist das Bild beim Drucken bereits geladen – sonst fehlt es im Ausdruck, wenn der Druckdialog sofort öffnet.
+let logoData = null, printStale = true, printTimer = null, printing = false;
+async function preloadLogo() {
+  try {
+    const blob = await (await fetch('img/wicki-logo.png')).blob();
+    logoData = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+    printStale = true; schedulePrint();
+  } catch { /* ohne Netz: Dateipfad, der Service Worker liefert das Bild */ }
+}
+function schedulePrint() { clearTimeout(printTimer); printTimer = setTimeout(() => { if (printStale && !printing) { buildPrintSheet(); fitPrint(); } }, 400); }
+
 function buildPrintSheet() {
+  printStale = false;
   const pu = S.units.p, n = S.set.persons, sheet = $('printSheet');
   const cylRows = (list) => `<table><thead><tr><th class="l">${esc(t('thNr'))}</th><th>L</th><th>${pu}</th><th>${esc(t('thUsable'))}</th></tr></thead><tbody>
     ${list.map((c) => `<tr><td class="l">${esc(c.nr)}</td><td>${c.size.toFixed(1)}</td><td>${pText(c.p, pu)}</td><td>${f0(c.usable)}</td></tr>`).join('')}</tbody></table>`;
@@ -668,7 +682,7 @@ function buildPrintSheet() {
       <div class="p-head">
         <div><div class="p-title">${t('title_html')}</div><div>${esc(t('eyebrow') + t('eyebrowDev'))}</div>${S.title ? `<div class="p-name">${esc(S.title)}</div>` : ''}
           <div class="p-link">${S.id ? esc(showUrl()) : '–'}</div><div class="dim">${esc(t('pPrinted', { dt: dateText(Date.now()) + ' ' + timeText(new Date().toISOString()) }))} · v${APP.version}</div></div>
-        <div class="p-brand">${qrSvg(shareUrl())}<img src="img/wicki-logo.png" alt="Wicki Partners Ballonteam"></div>
+        <div class="p-brand">${qrSvg(shareUrl())}<img src="${logoData || 'img/wicki-logo.png'}" alt="Wicki Partners Ballonteam"></div>
       </div>
       <div class="p-bal">
         <div><div class="k">${esc(t('pUsable'))}</div><div class="v">${f0(R.usable)} L</div></div>
@@ -692,12 +706,9 @@ function buildPrintSheet() {
     </div>`;
 }
 
-/** Baut das Druckblatt und wählt die Stufe (fit-0 … fit-5), bei der alles auf die A5-Seite passt. */
-async function preparePrint() {
-  buildPrintSheet();
+/** Wählt die Stufe (fit-0 … fit-5), bei der alles auf die A5-Seite passt. */
+function fitPrint() {
   const sheet = $('printSheet');
-  try { await document.fonts.ready; } catch { /* ohne Schriften-API direkt messen */ }
-  sheet.classList.add('measure');
   let fits = false, lvl = 0;
   for (lvl = 0; lvl <= 5; lvl++) {
     sheet.className = 'print-sheet measure fit-' + lvl;
@@ -709,11 +720,22 @@ async function preparePrint() {
   sheet.className = 'print-sheet fit-' + lvl;
   return { fits, level: lvl };
 }
+/** Baut das Druckblatt, wartet auf Schriften und Bilder und passt es ein. */
+async function preparePrint() {
+  buildPrintSheet();
+  try { await document.fonts.ready; } catch { /* ohne Schriften-API direkt messen */ }
+  const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+  await Promise.all([...$('printSheet').querySelectorAll('img')].map((img) => Promise.race([img.decode ? img.decode().catch(() => {}) : Promise.resolve(), wait(1500)])));
+  return fitPrint();
+}
 
 async function doPrint() {
-  const r = await preparePrint();
-  if (!r.fits) showNotice(t('pTooLong'));
-  window.print();
+  printing = true;
+  try {
+    const r = await preparePrint();
+    if (!r.fits) showNotice(t('pTooLong'));
+    window.print();
+  } finally { printing = false; }
 }
 
 /* ---------- Menü ---------- */
@@ -909,7 +931,8 @@ function wire() {
   }));
 
   window.addEventListener('hashchange', loadFromHash);
-  window.addEventListener('beforeprint', () => { if (!$('printA5')) buildPrintSheet(); });
+  // Drucken über das Browsermenü (Ctrl+P): Das Blatt ist in der Regel schon aktuell; sonst jetzt bauen und einpassen
+  window.addEventListener('beforeprint', () => { if (!printing && (printStale || !$('printA5'))) { buildPrintSheet(); fitPrint(); } });
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState !== 'visible' || !S.id || !remote.configured || sync.state === 'saving') return;
     const id = S.id, rem = await remote.get(id);
@@ -928,6 +951,7 @@ function wire() {
   renderAll();
   loadFromHash();
   pcRefresh();
+  preloadLogo();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   window.O2 = { state: () => S, result: () => R, preparePrint };       // für Tests und Fehlersuche
 }());

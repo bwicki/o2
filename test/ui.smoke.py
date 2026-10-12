@@ -223,6 +223,20 @@ async def main():
         await pg.wait_for_timeout(200)
 
         print('Druck A5 auf A4 quer')
+        # Logo im Ausdruck: beim Öffnen des Druckdialogs muss das Bild geladen sein (rechts vom QR-Code)
+        await pg.evaluate("""() => { window.__p = null; window.print = () => { const b = document.querySelector('#printSheet .p-brand'), i = b.querySelector('img'), q = b.querySelector('svg');
+          window.__p = { complete: i.complete, w: i.naturalWidth, right: i.getBoundingClientRect().left >= q.getBoundingClientRect().right - 1 }; }; }""")
+        await pg.click('#printBtn')
+        await pg.wait_for_function('window.__p !== null', timeout=5000)
+        pr = await pg.evaluate('window.__p')
+        check(pr['complete'] and pr['w'] > 0, f'Logo ist beim Drucken geladen ({pr})')
+        await pg.fill('#setPersons', '3')
+        await pg.wait_for_timeout(700)
+        ctrlp = await pg.evaluate("""() => { window.dispatchEvent(new Event('beforeprint')); const s = document.querySelector('#printSheet'), i = s.querySelector('.p-brand img');
+          return { persons: s.textContent.includes('3 Personen'), complete: i.complete && i.naturalWidth > 0, fit: /fit-\\d/.test(s.className) }; }""")
+        check(ctrlp['persons'] and ctrlp['complete'] and ctrlp['fit'], f'Drucken über das Browsermenü: Blatt aktuell, Logo geladen ({ctrlp})')
+        await pg.fill('#setPersons', '2')
+        await pg.wait_for_timeout(200)
         r = await pg.evaluate('window.O2.preparePrint()')
         check(r['fits'] and r['level'] == 0, f'Beispiel passt ohne Verkleinern ({r})')
         await pg.emulate_media(media='print')

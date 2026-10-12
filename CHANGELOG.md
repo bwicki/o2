@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.3.1 — 2026-10-12
+
+- **Druck: Logo fehlte im Ausdruck.** Das Druckblatt wurde erst beim Klick auf «Drucken» gebaut; öffnete der Druckdialog, bevor das Logo geladen war, erschien rechts vom QR-Code nichts. Neu wird das Logo beim Start geladen, das Druckblatt nach jeder Änderung im Hintergrund nachgeführt, und vor dem Druckdialog wartet die App auf das Bild.
+- Drucken über das Browsermenü (Ctrl+P) druckt jetzt immer den aktuellen Stand in der passenden Schriftgrösse (vorher den Stand des letzten Klicks auf «Drucken»).
+
 ## 0.3.0 — 2026-10-12
 
 - **«Konfiguration … aktualisieren?»:** Weichen die Eingaben in 1 oder 2 von der gespeicherten persönlichen Konfiguration ab, erscheint in der Zeile «Meine Konfiguration» ein Knopf, der sie unter demselben Kurzcode aktualisiert. Änderungen am Fahrtprofil lösen ihn nicht aus.

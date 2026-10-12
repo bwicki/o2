@@ -1,1 +1,1 @@
-{"name":"o2","version":"0.3.0","private":true,"type":"module","description":"EDS O2-Planung – Sauerstoffvorrat, Verbrauch und Reichweite (statisches Frontend + Cloudflare Worker)","scripts":{"test":"node --test test/*.test.mjs","serve":"python3 -m http.server 8080"}}
+{"name":"o2","version":"0.3.1","private":true,"type":"module","description":"EDS O2-Planung – Sauerstoffvorrat, Verbrauch und Reichweite (statisches Frontend + Cloudflare Worker)","scripts":{"test":"node --test test/*.test.mjs","serve":"python3 -m http.server 8080"}}
