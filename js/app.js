@@ -68,8 +68,8 @@ const dateText = (d) => new Date(d).toLocaleDateString(locale(), { day: '2-digit
 
 /* ---------- Persönliche Konfiguration (Kurzcode für Vorrat und Einstellungen) ---------- */
 const pc = { code: prefs.get().pc || '', msg: null };              // msg: { key, vars, cls }
-const CFG_KEYS = ['persons', 'sf', 'startM', 'startU', 'rest', 'climb', 'sink'];
-const cfgOf = (s) => ({ units: { ...s.units }, cyl: s.cyl.map((c) => ({ nr: c.nr, size: c.size, p: c.p })), set: { ...Object.fromEntries(CFG_KEYS.map((k) => [k, s.set[k]])), factor: 1 } });
+const CFG_KEYS = ['persons', 'sf', 'startM', 'startU', 'rest', 'climb', 'sink', 'factor'];
+const cfgOf = (s) => ({ units: { ...s.units }, cyl: s.cyl.map((c) => ({ nr: c.nr, size: c.size, p: c.p })), set: Object.fromEntries(CFG_KEYS.map((k) => [k, s.set[k]])) });
 const cfgKey = (c) => JSON.stringify([c.units.p, c.units.alt, c.cyl.map((x) => [x.nr, x.size, x.p]), CFG_KEYS.map((k) => c.set[k])]);
 function applyCfg(target, data) {
   const n = normalize({ units: data.units, cyl: data.cyl, set: data.set, prof: [] });
@@ -98,6 +98,9 @@ function renderPc() {
   st.textContent = pc.msg ? t(pc.msg.key, pc.msg.vars) : t('pcHint');
   st.className = 'pc-status ' + (pc.msg ? pc.msg.cls : '');
   st.hidden = !pc.msg && !!pc.code;                                  // Erklärung nur, solange noch kein Kurzcode gemerkt ist
+  const up = $('pcUpdate');                                           // Eingaben in 1 oder 2 weichen von der gespeicherten Konfiguration ab
+  up.hidden = !pcDirty();
+  up.textContent = t('pcUpdate', { code: pc.code });
 }
 function pcRead() {
   const code = $('pcInput').value.trim().toLowerCase();
@@ -118,6 +121,19 @@ async function pcLoad() {
   if (S.id) touch();
   renderInputs(); renderResults();
   pcSay(fromCache ? 'pcLoadedCache' : 'pcLoaded', { code }, 'ok');
+}
+/** Weicht der Stand in 1 und 2 von der gemerkten Konfiguration ab? */
+function pcDirty() {
+  const cached = pc.code ? profile.cached(pc.code) : null;
+  return !!cached && cfgKey(cfgOf(S)) !== cfgKey(applyCfg(DEFAULTS(), cached));
+}
+/** «Konfiguration aktualisieren?»: den Stand aus 1 und 2 unter dem gemerkten Kurzcode speichern. */
+async function pcUpdate() {
+  const code = pc.code; if (!code) return;
+  const data = cfgOf(S), res = await profile.put(code, data, false);
+  if (!res || res === 'taken') { pcSay('pcOffline', null, 'bad'); return; }
+  pcRemember(code, data);
+  pcSay('pcSaved', { code, time: timeText(res.updated) }, 'ok');
 }
 async function pcSave() {
   const code = pcRead(); if (!code) return;
@@ -171,13 +187,22 @@ async function loadFromHash() {
   clearTimeout(saveTimer);
   hideNotice();
   if (/^#i\./.test(location.hash)) {                                 // Fahrtprofil aus einer anderen App (Fahrtbriefing)
-    const imp = parseImport(location.hash);
-    S = freshState(); sync.state = 'demo';
-    if (!imp) { history.replaceState(null, '', baseUrl()); renderAll(); showNotice(t('importBad')); return; }
-    S.prof = imp.levels; S.title = imp.title; S.set.trans = !imp.steps;
-    touch();                                                         // legt den Kurzcode an und ersetzt den Übergabe-Link in der Adresse
+    const imp = parseImport(location.hash), from = location.hash;
+    if (!imp) { S = freshState(); sync.state = 'demo'; history.replaceState(null, '', baseUrl()); renderAll(); showNotice(t('importBad')); return; }
+    let base = null;
+    if (imp.id) {                                                    // Kurzcode vom Fahrtbriefing: Eine bestehende Berechnung behält Vorrat und Einstellungen
+      base = local.load(imp.id);
+      const rem = await remote.get(imp.id);
+      if (location.hash !== from) return;                            // inzwischen woanders
+      if (rem && rem.data && (!base || (rem.data.updated || '') >= (base.updated || ''))) base = rem.data;
+    }
+    S = base ? normalize({ ...base, id: imp.id }) : freshState();
+    sync.state = 'demo';
+    S.prof = imp.levels; S.title = imp.title || S.title; S.set.trans = !imp.steps;
+    if (imp.id) { S.id = imp.id; history.replaceState(null, '', '#' + S.id); }
+    touch();                                                         // speichert (und legt ohne übergebenen Kurzcode einen an); der Übergabe-Link verschwindet aus der Adresse
     renderAll();
-    showNotice(t('imported', { n: S.prof.length }));
+    showNotice(t(base ? 'importedUpdate' : 'imported', { n: S.prof.length, id: S.id }));
     return;
   }
   if (!id) { S = freshState(); sync.state = 'demo'; renderAll(); return; }
@@ -278,6 +303,8 @@ function renderResults() {
   const ph = $('profHint');
   if (S.set.trans === false) ph.innerHTML = `${esc(t('transOff'))} <button type="button" id="transOn">${esc(t('transOn'))}</button>`; else ph.textContent = t('profHint');
 
+  if (pc.msg && pc.msg.cls === 'ok' && pcDirty()) pc.msg = null;        // «geladen»/«gespeichert» gilt nicht mehr, sobald 1 oder 2 abweicht
+  renderPc();
   renderBalance();
   renderWarns();
   $('chart').innerHTML = chartSvg();
@@ -828,6 +855,7 @@ function wire() {
   $('pcLoad').addEventListener('click', pcLoad);
   $('pcSave').addEventListener('click', pcSave);
   $('pcForget').addEventListener('click', pcForget);
+  $('pcUpdate').addEventListener('click', pcUpdate);
   $('pcInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); pcLoad(); } });
   $('pcInput').addEventListener('input', () => { if (pc.msg) pcSay(null); });
 

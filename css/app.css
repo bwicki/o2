@@ -105,6 +105,7 @@ a { color: var(--amber-text); } a:hover { text-decoration: none; }
 .cfgbar .pc-x[hidden] { display: none; }
 .cfgbar .pc-status { flex: 1 0 100%; margin: 0; font-size: 11px; line-height: 1.5; color: var(--text-dim); }
 .cfgbar .pc-status[hidden] { display: none; }
+.cfgbar #pcUpdate { flex: 1 0 100%; } .cfgbar #pcUpdate[hidden] { display: none; }
 .cfgbar .pc-status.ok { color: var(--ok-text); } .cfgbar .pc-status.bad { color: var(--bad); }
 .switch-line { color: var(--text); }
 .switch-line.bad { color: var(--bad); }
@@ -264,21 +265,6 @@ dialog::backdrop { background: rgba(0,0,0,.5); }
   .cfgbar { padding: 8px 10px; }
   .cfgbar .lb-label { flex: 1 0 100%; margin-right: 0; }
   .cfgbar .pc-in { flex: 1 1 0; } .cfgbar #pcInput { width: 100%; height: 44px; font-size: 14px; }
-.lb-title { flex: 1 1 170px; min-width: 0; max-width: 300px; height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--text-strong); font: inherit; font-weight: 600; }
-.lb-title::placeholder { color: var(--text-dim); font-weight: 400; }
-
-/* ---------- Persönliche Konfiguration (Kurzcode) ---------- */
-.cfgbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-family: var(--mono); font-size: 12px; }
-.cfgbar .lb-label { margin-right: auto; }
-.cfgbar .pc-in { position: relative; display: inline-flex; }
-.cfgbar #pcInput { width: 104px; font-weight: 600; background: var(--panel); padding-right: 22px; }
-.cfgbar .pc-x { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 22px; height: 28px; border: none; background: none; color: var(--text-dim); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-.cfgbar .pc-x[hidden] { display: none; }
-.cfgbar .pc-status { flex: 1 0 100%; margin: 0; font-size: 11px; line-height: 1.5; color: var(--text-dim); }
-.cfgbar .pc-status[hidden] { display: none; }
-.cfgbar .pc-status.ok { color: var(--ok-text); } .cfgbar .pc-status.bad { color: var(--bad); }
-.switch-line { color: var(--text); }
-.switch-line.bad { color: var(--bad); }
   .linkbar .qr-btn { width: 44px; height: 44px; flex: none; padding: 2px; } .linkbar .qr-btn svg { width: 38px; height: 38px; }
   table.rows td, table.rows th { padding-left: 4px; padding-right: 4px; }
   table.rows tr.auto td.l { padding-left: 12px; }

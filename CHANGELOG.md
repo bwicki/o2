@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.3.0 — 2026-10-12
+
+- **«Konfiguration … aktualisieren?»:** Weichen die Eingaben in 1 oder 2 von der gespeicherten persönlichen Konfiguration ab, erscheint in der Zeile «Meine Konfiguration» ein Knopf, der sie unter demselben Kurzcode aktualisiert. Änderungen am Fahrtprofil lösen ihn nicht aus.
+- **Verbrauchsfaktor in der Konfiguration:** Der Faktor aus dem Nachführen gehört neu zur persönlichen Konfiguration und wird mit ihr gespeichert und geladen (Speicher-Server 0.2.1).
+- **Übergabe aus dem Fahrtbriefing mit Kurzcode:** Das Fahrtbriefing vergibt den Kurzcode der Berechnung (`c` im Anhang) und kann sie so wieder öffnen. Eine erneute Übergabe ersetzt nur Fahrtprofil und Titel; Vorrat und Einstellungen bleiben.
+- Sauerstoffregel mit Quelle: Meldungen und Legende nennen AMC1 BOP.BAS.180 (Part-BOP, ED Decision 2018/004/R) und die Rolle des Kommandanten nach BOP.BAS.180 (Verordnung (EU) 2018/395). Die 30-Minuten-Grenze zwischen 10 000 und 13 000 ft betrifft die Besatzung, die Grenze 13 000 ft alle Insassen. Rechnung unverändert.
+
 ## 0.2.0 — 2026-10-12
 
 - **Persönlicher Kurzcode («Meine Konfiguration»):** Vorrat (1) und Einstellungen (2) lassen sich unter einem selbst gewählten Kurzcode (3–20 Buchstaben oder Ziffern, ohne Kennwort) speichern und auf jedem Gerät wieder laden. Ein Kurzcode wird nur einmal vergeben: Speichern unter einem vergebenen Kurzcode geht erst, nachdem man ihn auf dem Gerät geladen hat. Das Gerät merkt sich den Kurzcode; neue Berechnungen beginnen dann mit der eigenen Konfiguration. Aufbewahrung 2 Jahre ab der letzten Nutzung.

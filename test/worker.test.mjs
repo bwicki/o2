@@ -112,7 +112,7 @@ test('Persönlicher Kurzcode: einmalig vergeben, laden, überschreiben', async (
   assert.equal((await call(e, 'PUT', '/p/bwi', { data: cfg(), create: true })).status, 409, 'vergeben');
   const g = await (await call(e, 'GET', '/p/Bwi')).json();
   assert.equal(g.data.cyl.length, 2);
-  assert.equal(g.data.set.factor, 1, 'Verbrauchsfaktor gehört nicht zur Konfiguration');
+  assert.equal(g.data.set.factor, 1.3, 'Verbrauchsfaktor gehört zur Konfiguration');
   assert.equal(g.data.prof, undefined, 'kein Fahrtprofil');
   assert.equal(g.data.title, undefined);
   const c2 = cfg(); c2.cyl.push({ nr: '3', size: 3, p: 300 });

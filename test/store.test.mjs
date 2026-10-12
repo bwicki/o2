@@ -33,6 +33,9 @@ test('Übergabe eines Fahrtprofils', () => {
   assert.equal(imp.title, '2026-017 · HB-QWZ'); assert.equal(imp.steps, true);
   assert.deepEqual(imp.levels, [{ alt: 9000, dur: 1.5 }, { alt: 14000, dur: 2 }]);
   assert.equal(parseHash(h).id, null, 'kein Kurzcode');
+  assert.equal(imp.id, null);
+  assert.equal(parseImport('#' + encodeImport({ levels: [{ alt: 9000, dur: 1 }], id: 'abc234' })).id, 'ABC234', 'Kurzcode der übergebenden App');
+  assert.equal(parseImport('#' + encodeImport({ levels: [{ alt: 9000, dur: 1 }], id: 'ABC10O' })).id, null, 'ungültiger Kurzcode wird übergangen');
   assert.equal(parseImport('#i.kaputt'), null);
   assert.equal(parseImport('#ABC234'), null);
   const many = '#' + encodeImport({ levels: Array.from({ length: 50 }, (_, i) => ({ alt: 9000 + i * 100, dur: 0.1 })) });

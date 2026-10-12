@@ -31,9 +31,13 @@ Weitere Funktionen:
 - **Zylinderwechsel-Plan** — alle Personen atmen aus demselben Zylinder; die
   Zylinder werden in der erfassten Reihenfolge geleert. Jeder Wechsel steht als
   gestrichelte Linie mit Zeitpunkt im Verlauf und als Zeile darunter.
-- **Sauerstoffregel** — Meldung, wenn das Profil ohne Sauerstoff über 13 000 ft
-  führt oder länger als 30 Minuten zwischen 10 000 und 13 000 ft bleibt (nur
-  möglich, wenn die Beginnhöhe über diesen Grenzen liegt).
+- **Sauerstoffregel** — Meldung nach AMC1 BOP.BAS.180 (Part-BOP), wenn das
+  Profil ohne Sauerstoff über 13 000 ft Druckhöhe führt oder länger als 30
+  Minuten zwischen 10 000 und 13 000 ft bleibt (nur möglich, wenn die
+  Beginnhöhe über diesen Grenzen liegt). Nach BOP.BAS.180 beurteilt der
+  Kommandant, ab wann Sauerstoff nötig ist; die Grenzen des AMC gelten, wenn
+  er das nicht kann. Die App unterscheidet nicht zwischen Besatzung und
+  Passagieren.
 - **Stand nachführen** — im Flug die Dauer auf der aktuellen Höhenstufe und den
   abgelesenen Druck eingeben. Die App vergleicht mit dem Plan, bildet daraus
   einen Verbrauchsfaktor und rechnet den Rest der Fahrt neu.
@@ -75,7 +79,11 @@ Kennwort.
   sich erst speichern, nachdem er auf dem Gerät geladen wurde. Das schützt vor
   versehentlichem Überschreiben, nicht vor Absicht: Wer den Kurzcode kennt,
   kann die Konfiguration laden und ändern.
-- Nicht Teil der Konfiguration: Fahrtprofil, Titel und Verbrauchsfaktor.
+- Weichen die Eingaben in 1 oder 2 von der gespeicherten Konfiguration ab,
+  erscheint der Knopf **«Konfiguration … aktualisieren?»**. Er speichert den
+  Stand unter demselben Kurzcode.
+- Zur Konfiguration gehört auch der Verbrauchsfaktor aus dem Nachführen. Nicht
+  dazu gehören Fahrtprofil und Titel.
 - Aufbewahrung: 2 Jahre ab dem letzten Speichern oder Laden.
 
 ## Übernahme aus dem Fahrtbriefing
@@ -91,9 +99,15 @@ Ein übernommener Verlauf enthält Steigen und Sinken bereits als Teilstufen.
 Die App ergänzt dann keine eigenen Übergänge und keinen Abstieg am Schluss
 (im Abschnitt Fahrtprofil umschaltbar).
 
+Das Fahrtbriefing vergibt den Kurzcode der Berechnung und merkt ihn sich. Es
+zeigt danach «O₂-Planung öffnen» (die Berechnung unverändert) und «Profil neu
+übergeben»: Das ersetzt Fahrtprofil und Titel der bestehenden Berechnung,
+Vorrat und Einstellungen bleiben.
+
 Format des Anhangs: base64url von
-`{"v":1,"t":"Titel","l":[[Höhe ft, Dauer h],…],"s":1}`; `s: 1` heisst «Verlauf
-ohne zu ergänzende Übergänge». Höchstens 30 Höhenstufen.
+`{"v":1,"t":"Titel","l":[[Höhe ft, Dauer h],…],"s":1,"c":"ABC234"}`; `s: 1`
+heisst «Verlauf ohne zu ergänzende Übergänge», `c` ist der Kurzcode der
+Berechnung (fakultativ). Höchstens 30 Höhenstufen.
 
 ## Datengrundlage
 

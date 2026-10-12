@@ -69,7 +69,9 @@ export const EDS_MASK = [[20000, 63.16], [25000, 96.92]];                      /
 export const MASK_ABOVE_FT = 18000;    // über FL180 verlangt der Hersteller Maske und F-Modus
 export const MIN_RATE = 8;             // L/h: Untergrenze unter 10 000 ft (Annahme, keine Herstellerangabe)
 
-// Sauerstoffregel der Betriebsvorschriften: über 13 000 ft immer, zwischen 10 000 und 13 000 ft nach 30 Minuten.
+// Sauerstoffregel nach AMC1 BOP.BAS.180 (Part-BOP, ED Decision 2018/004/R), wenn der Kommandant die Wirkung des
+// Sauerstoffmangels nicht selbst beurteilen kann (BOP.BAS.180, Verordnung (EU) 2018/395): alle Insassen über 13 000 ft
+// Druckhöhe durchgehend, die Besatzung zwischen 10 000 und 13 000 ft für jede Dauer über 30 Minuten.
 export const RULE_ALWAYS_FT = 13000;
 export const RULE_BAND_FT = 10000;
 export const RULE_BAND_LIMIT_H = 0.5;

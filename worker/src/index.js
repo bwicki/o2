@@ -11,7 +11,7 @@
  * Gespeichert werden nur Rechenwerte (Zylinder, Einstellungen, Höhenstufen) und ein frei gewählter Titel.
  *
  * Persönliche Konfiguration: Vorrat und Einstellungen unter einem selbst gewählten Kurzcode (3–20 Buchstaben
- * oder Ziffern). Ein Kurzcode wird nur einmal vergeben; ohne Kennwort — wer ihn kennt, kann laden und speichern.
+ * oder Ziffern), samt Verbrauchsfaktor. Ein Kurzcode wird nur einmal vergeben; ohne Kennwort — wer ihn kennt, kann laden und speichern.
  * Aufbewahrung PROFILE_DAYS ab dem letzten Speichern oder Laden. */
 
 const ID_RE = /^[A-HJKMNP-Z2-9]{6}$/;
@@ -66,11 +66,10 @@ export function clean(d, id) {
   return out;
 }
 
-/* Persönliche Konfiguration: nur Vorrat (1) und Einstellungen (2); der Verbrauchsfaktor gehört zur einzelnen Fahrt. */
+/* Persönliche Konfiguration: Vorrat (1) und Einstellungen (2) samt Verbrauchsfaktor; ohne Fahrtprofil und Titel. */
 export function cleanProfile(d) {
-  const b = cleanBase(d && typeof d === 'object' && !Array.isArray(d) ? { ...d, set: { ...(d.set || {}), factor: 1 } } : d);
+  const b = cleanBase(d && typeof d === 'object' && !Array.isArray(d) && d.set && d.set.factor == null ? { ...d, set: { ...d.set, factor: 1 } } : d);
   if (!b) return null;
-  b.set.factor = 1;
   return { v: 1, units: b.units, cyl: b.cyl, set: b.set };
 }
 

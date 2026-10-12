@@ -127,9 +127,10 @@ export function decodeSnap(str) {
 
 /**
  * Übergabe eines Fahrtprofils aus einer anderen App (Fahrtbriefing): «#i.<Anhang>».
- * Anhang = base64url von JSON { v:1, t: Titel, l: [[Höhe ft, Dauer h], …], s: 1 = Verlauf ohne zu ergänzende Übergänge }.
+ * Anhang = base64url von JSON { v:1, t: Titel, l: [[Höhe ft, Dauer h], …], s: 1 = Verlauf ohne zu ergänzende Übergänge,
+ * c: Kurzcode, unter dem die Berechnung angelegt wird (vergibt die übergebende App, damit sie den Link kennt) }.
  */
-export function encodeImport(o) { return 'i.' + b64u.enc(JSON.stringify({ v: 1, t: o.title || '', l: o.levels.map((l) => [Math.round(l.alt), r3(l.dur)]), s: o.steps ? 1 : 0 })); }
+export function encodeImport(o) { return 'i.' + b64u.enc(JSON.stringify({ v: 1, t: o.title || '', l: o.levels.map((l) => [Math.round(l.alt), r3(l.dur)]), s: o.steps ? 1 : 0, ...(o.id ? { c: o.id } : {}) })); }
 export function parseImport(hash) {
   const h = String(hash || '').replace(/^#/, '');
   if (!/^i\./.test(h)) return null;
@@ -139,7 +140,7 @@ export function parseImport(hash) {
     const levels = o.l.filter((l) => Array.isArray(l) && Number.isFinite(+l[0]) && Number.isFinite(+l[1]) && +l[0] >= 0 && +l[0] <= 60000 && +l[1] >= 0 && +l[1] <= 200)
       .slice(0, 30).map((l) => ({ alt: +l[0], dur: +l[1] }));
     if (!levels.length) return null;
-    return { title: typeof o.t === 'string' ? o.t.slice(0, 60) : '', levels, steps: !!o.s };
+    return { title: typeof o.t === 'string' ? o.t.slice(0, 60) : '', levels, steps: !!o.s, id: typeof o.c === 'string' && ID_RE.test(o.c.toUpperCase()) ? o.c.toUpperCase() : null };
   } catch { return null; }
 }
 
